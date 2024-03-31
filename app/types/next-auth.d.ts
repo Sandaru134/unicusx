@@ -1,21 +1,36 @@
 import NextAuth from "next-auth"
+import {User, Session} from "next-auth"
 
 declare module "next-auth" {
     interface User {
-        image_url:String
-        username:String
-        prefix:String
+      id: string;
+      index: string;
+      username: string;
+      prefix: string;
+      name: string;
     }
   interface Session {
     user: User & {
-      image_url:string
-      username:String
-      prefix:String
+      username:string
+      prefix:string
+      index:string
+      id: string
+      institute_id: string
     }
     token: {
-        image_url:string
-        username:String
-        prefix:String
+        username:string
+        prefix:string
+        index:string
+        id: string
+        institute_id: string
     }
   }
+}
+
+export interface CustomUser extends User {
+  id: string;
+  index: string;
+  username: string;
+  prefix: string;
+  name: string;
 }

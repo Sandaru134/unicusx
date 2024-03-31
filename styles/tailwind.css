@@ -677,3 +677,40 @@ img.dark-img {
 .dark img.dark-img {
     @apply !block;
 }
+
+/* .ant-table {
+    width: '100%';
+}
+
+.ant-table-thead,
+.ant-table-tbody {
+    display: flex;
+    width: '100%';
+}
+
+.ant-table-thead {
+    flex: 1;
+    width: '100%';
+}
+
+.ant-table-tbody {
+    flex: 1;
+    width: '100%';
+}
+
+.ant-table-row {
+    display: flex;
+}
+
+.ant-table-cell {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Adjust the wid
+.ant-table-cell.action-column { 
+    justify-content: end;
+    align-items: end;
+    width: '100%';
+} */

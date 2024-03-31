@@ -33,13 +33,20 @@ import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuMore from '@/components/icon/menu/icon-menu-more';
 import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 
 const Header = () => {
     const pathname = usePathname();
     const dispatch = useDispatch();
     const router = useRouter();
     const { t, i18n } = getTranslation();
+
+    const handleSignOut = async () => {
+        await signOut({ redirect: false }); // Disable default redirect
+        window.localStorage.removeItem('session'); // Clear local session data
+        router.push('/login'); // Redirect to logout page
+      };
+      
 
     useEffect(() => {
         const selector = document.querySelector('ul.horizontal-menu a[href="' + window.location.pathname + '"]');
@@ -165,7 +172,7 @@ const Header = () => {
                     </div>
 
                     <div className="hidden sm:block ltr:mr-2 rtl:ml-2">
-                        <ul className="flex items-center space-x-2 dark:text-[#d0d2d6] rtl:space-x-reverse">
+                        {/* <ul className="flex items-center space-x-2 dark:text-[#d0d2d6] rtl:space-x-reverse">
                             <li>
                                 <Link href="/apps/calendar" className="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60">
                                     <IconCalendar />
@@ -181,7 +188,7 @@ const Header = () => {
                                     <IconChatNotification />
                                 </Link>
                             </li>
-                        </ul>
+                        </ul> */}
                     </div>
                     <div className="flex items-center space-x-1.5 dark:text-[#d0d2d6] sm:flex-1 lg:space-x-2 ltr:ml-auto ltr:sm:ml-0 rtl:mr-auto rtl:space-x-reverse sm:rtl:mr-0">
                         <div className="sm:ltr:mr-auto sm:rtl:ml-auto">
@@ -249,7 +256,7 @@ const Header = () => {
                             )}
                         </div>
                         <div className="dropdown shrink-0">
-                            <Dropdown
+                            {/* <Dropdown
                                 offset={[0, 8]}
                                 placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
                                 btnClassName="block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60"
@@ -274,10 +281,10 @@ const Header = () => {
                                         );
                                     })}
                                 </ul>
-                            </Dropdown>
+                            </Dropdown> */}
                         </div>
                         <div className="dropdown shrink-0">
-                            <Dropdown
+                            {/* <Dropdown
                                 offset={[0, 8]}
                                 placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
                                 btnClassName="block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60"
@@ -403,7 +410,7 @@ const Header = () => {
                                         </li>
                                     )}
                                 </ul>
-                            </Dropdown>
+                            </Dropdown> */}
                         </div>
                         <div className="dropdown flex shrink-0">
                             <Dropdown
@@ -446,10 +453,10 @@ const Header = () => {
                                         </Link>
                                     </li>
                                     <li className="border-t border-white-light dark:border-white-light/10">
-                                        <Link href="/login" className="!py-3 text-danger">
+                                        <button onClick={handleSignOut} className="!py-3 text-danger">
                                             <IconLogout className="h-4.5 w-4.5 shrink-0 rotate-90 ltr:mr-2 rtl:ml-2" />
                                             Sign Out
-                                        </Link>
+                                        </button>
                                     </li>
                                 </ul>
                             </Dropdown>

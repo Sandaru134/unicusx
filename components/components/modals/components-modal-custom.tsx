@@ -14,7 +14,9 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { Navigation, Pagination } from 'swiper';
+import Pagination from 'swiper';
+import Navigation from 'swiper';
+import Autoplay from 'swiper';
 import { useSelector } from 'react-redux';
 import { IRootState } from '@/store';
 

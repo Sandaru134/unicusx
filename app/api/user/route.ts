@@ -5,7 +5,7 @@ import { hash } from 'bcrypt';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { name, password, image_url } = body;
+        const { name, password } = body;
 
         const uniqueNumber = await db.user_sequence.create({
             data:{}
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
         const username = `${prefix}${uniqueNumber.id}`;
 
-        const existUserById = await db.user.findUnique({
+        const existUserById = await db.unicus_admin.findUnique({
             where: { username: username },
         });
 
@@ -24,13 +24,11 @@ export async function POST(req: Request) {
 
         const hashedPassword = await hash(password, 10);
 
-        const newUser = await db.user.create({
+        const newUser = await db.unicus_admin.create({
             data: {
                 username: username,
                 password: hashedPassword,
-                name,
-                image_url,
-                prefix: prefix
+                name
             },
         });
 
@@ -38,5 +36,8 @@ export async function POST(req: Request) {
         return NextResponse.json({user: rest, massage:"User create successfully"}, {status:201});
     } catch (error) {
         console.log(error);
+        return new NextResponse('Internal error', { status: 500 });
+    }finally{
+        db.$disconnect()
     }
 }

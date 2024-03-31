@@ -3,7 +3,9 @@ import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import { Pagination, Autoplay } from 'swiper';
+import Pagination from 'swiper';
+import Navigation from 'swiper';
+import Autoplay from 'swiper';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
 
 const ComponentsCarouselVertical = () => {

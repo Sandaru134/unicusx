@@ -2,26 +2,27 @@
 import IconCopy from '@/components/icon/icon-copy';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
 import React from 'react';
-import CopyToClipboard from 'react-copy-to-clipboard';
+// import CopyToClipboard from 'react-copy-to-clipboard';
 import Swal from 'sweetalert2';
 
 const ComponentsFormsClipboardAdvanced = () => {
-    const message4 = 'http://www.admin-dashboard.com/code';
-    const showMessage = (message: String = '') => {
-        const toast = Swal.mixin({
-            toast: true,
-            position: 'top',
-            showConfirmButton: false,
-            timer: 3000,
-        });
-        toast.fire({
-            icon: 'success',
-            title: message || 'Copied successfully.',
-            padding: '10px 20px',
-        });
-    };
+    // const message4 = 'http://www.admin-dashboard.com/code';
+    // const showMessage = (message: String = '') => {
+    //     const toast = Swal.mixin({
+    //         toast: true,
+    //         position: 'top',
+    //         showConfirmButton: false,
+    //         timer: 3000,
+    //     });
+    //     toast.fire({
+    //         icon: 'success',
+    //         title: message || 'Copied successfully.',
+    //         padding: '10px 20px',
+    //     });
+    // };
     return (
-        <PanelCodeHighlight
+        <div>
+        {/* <PanelCodeHighlight
             title="Copy Hidden Text (Advanced)"
             codeHighlight={`import { useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
@@ -106,7 +107,8 @@ const message4 = 'http://www.admin-dashboard.com/code';
                     </form>
                 </div>
             </div>
-        </PanelCodeHighlight>
+        </PanelCodeHighlight> */}
+        </div>
     );
 };
 
