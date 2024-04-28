@@ -1,7 +1,15 @@
 import ComponentsAuthLoginForm from '@/components/auth/components-auth-login-form';
 import { Metadata } from 'next';
+import { K2D } from 'next/font/google';
 import Link from 'next/link';
 import React from 'react';
+
+const k2d = K2D({
+    weight: ['400', '500', '600', '700'],
+    subsets: ['latin'],
+    display: 'swap',
+    variable: '--font-k2d',
+  });
 
 export const metadata: Metadata = {
     title: 'Unicus X Login',
@@ -38,13 +46,13 @@ const CoverLogin = () => {
                         </div>
                         <div className="w-full max-w-[440px] lg:mt-16">
                             <div className="mb-10">
-                                <h1 className="text-3xl font-extrabold !leading-snug text-primary md:text-4xl">Welcome to Unicus X 👋</h1>
-                                <h2 className='text-gray-500 mt-2 pb-2'>Please sign-in to your account and start the adventure</h2>
+                                <h1 className={`text-[36px] font-semibold !leading-snug text-gray-500 md:text-4xl font-var(${k2d.variable})`}>Welcome to Unicus X 👋</h1>
+                                <h2 className='text-gray-500 font-medium mt-2 pb-2'>Please sign-in to your account and start the adventure</h2>
 
                                 <div className="mt-2 flex h-[80px] flex-col justify-self-start rounded bg-primary-dark-light p-3.5 text-primary dark:bg-primary-dark-light">
-                                    <span className="ltr:pr-2 rtl:pl-2 pt-1">
-                                        Student : <strong>Enter US ID</strong> / Password: <strong>NIC number</strong> <br />
-                                        <h1 className='pt-1'>Other &nbsp;&nbsp;&nbsp;&nbsp;: <strong>Enter US ID and password</strong></h1>
+                                    <span className="ltr:pr-2 rtl:pl-2 pt-1 font-medium text-[#3278FF]">
+                                        Student &nbsp;: Enter US ID / Password: NIC number <br />
+                                        <h1 className='pt-1'>Other &nbsp;&nbsp;&nbsp;&nbsp;: Enter US ID and password</h1>
                                     </span>
                                 </div>
                             </div>

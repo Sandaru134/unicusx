@@ -41,13 +41,36 @@ export async function POST(req: Request) {
             student_type = 'Kindergarten';
         }
 
-        const uniqueNumber = await db.user_sequence.create({
-            data: {},
+        let uniqueNumber;
+
+        const largestNumber = await db.student_User_sequence.aggregate({
+            _max: {
+                number: true,
+            },
         });
+
+        if (largestNumber._max.number) {
+            let newNumber = largestNumber._max.number + 1;
+
+            uniqueNumber = await db.student_User_sequence.create({
+                data: {
+                    number: newNumber,
+                },
+            });
+        } else {
+            let newNumber = 1;
+            uniqueNumber = await db.student_User_sequence.create({
+                data: {
+                    number: newNumber,
+                },
+            });
+        }
+
         let newStudent;
+
         const prefix = 'USS';
 
-        const student_index = `${prefix}${uniqueNumber.id}`;
+        const student_index = `${prefix}${uniqueNumber.number}`;
 
         const existUserById = await db.students.findUnique({
             where: { index: student_index },
@@ -72,6 +95,24 @@ export async function POST(req: Request) {
                     institute_id: session.user.id,
                 },
             });
+
+            //create term_class for each term
+            const terms = await db.terms.findMany({
+                where: {
+                    institute_id: session.user.id,
+                    completed: false,
+                },
+            });
+
+            for (const term of terms) {
+                await db.term_class.create({
+                    data: {
+                        term_id: term.term_id,
+                        class_id: newClass.class_id,
+                        institute_id: session.user.id,
+                    },
+                });
+            }
 
             newStudent = await db.students.create({
                 data: {
@@ -127,6 +168,26 @@ export async function POST(req: Request) {
             });
         }
 
+        const terms = await db.terms.findMany({
+            where: {
+                institute_id: session.user.id,
+                completed: false,
+            },
+        });
+
+        if (terms) {
+            for (const term of terms) {
+                await db.report.create({
+                    data: {
+                        student_id: newStudent.student_id,
+                        term_id: term.term_id,
+                        institute_id: session.user.id,
+                        class_id: newStudent.class_id,
+                    },
+                });
+            }
+        }
+
         return NextResponse.json(newStudent, { status: 201 });
     } catch (error) {
         console.log(error);
@@ -147,6 +208,7 @@ export async function GET(req: Request) {
         const students = await db.students.findMany({
             where: {
                 institute_id: session.user.id,
+                left:false
             },
             include: {
                 classes: {

@@ -13,19 +13,23 @@ export async function POST(request: Request) {
 
         const body = await request.json();
         const { term_id, grade_level, class_name, subject } = body;
-        console.log(body);
 
         const institute_id = await db.teachers.findUnique({
             where: {
-                index: session.user.id,
+                teacher_id: session.user.id,
             },
             select: {
                 institute_id: true,
             },
         });
 
+        if (!institute_id) {
+            return new NextResponse('not found', { status: 404 });
+        }
+
         const classId = await db.classes.findFirst({
             where: {
+                institute_id: institute_id.institute_id,
                 grade_level: grade_level,
                 class_name: class_name,
             },
@@ -33,30 +37,24 @@ export async function POST(request: Request) {
                 class_id: true,
             },
         });
+        if (!classId) {
+            return NextResponse.json('record not found', { status: 403 });
+        }
+
+        
 
         const marks = await db.marks.findMany({
             where: {
                 institute_id: institute_id?.institute_id,
                 term_id: term_id,
-                student_subject: {
-                    class_id: classId?.class_id,
-                    subject_id: subject,
-                },
+                class_id: classId?.class_id,
+                subject_id: subject,
             },
             include: {
-                student_subject: {
-                    include: {
-                        student: {
-                            select: {
-                                full_name: true,
-                                index: true,
-                            },
-                        },
-                    },
-                },
+                student: true,
             },
         });
-        console.log(marks);
+
         return NextResponse.json(marks, { status: 200 });
     } catch (error) {
         console.log(error);

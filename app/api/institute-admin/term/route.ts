@@ -34,6 +34,7 @@ export async function POST(req: Request) {
                 data: {
                     term_id: newTerm.term_id,
                     class_id: instituteClass.class_id,
+                    institute_id: session.user.id,
                 },
             });
         }
@@ -41,17 +42,20 @@ export async function POST(req: Request) {
         const addedStudents = await db.student_subjects_Status.findMany({
             where: {
                 added: true,
-                completed: false,
-            },
+            },include:{
+                student:true,
+            }
         });
 
         for (const addedStudent of addedStudents) {
             await db.marks.create({
                 data: {
                     student_subject_id: addedStudent.id,
+                    student_id: addedStudent.student_id,
                     term_id: newTerm.term_id,
                     institute_id: session.user.id,
-                    class_id: addedStudent.class_id,
+                    class_id: addedStudent.student.class_id,
+                    subject_id: addedStudent.subject_id,
                 },
             });
         }
@@ -59,17 +63,17 @@ export async function POST(req: Request) {
         const students = await db.students.findMany({
             where: {
                 institute_id: session.user.id,
-            }
-        })
-        for(const student of students){
+            },
+        });
+        for (const student of students) {
             await db.report.create({
                 data: {
                     student_id: student.student_id,
                     term_id: newTerm.term_id,
                     institute_id: session.user.id,
                     class_id: student.class_id,
-                }
-            })
+                },
+            });
         }
 
         return NextResponse.json(newTerm, { status: 201 });

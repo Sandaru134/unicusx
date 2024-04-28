@@ -6,10 +6,10 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOption);
-        
-        // if (!session) {
-        //     return new NextResponse('Unauthenticated', { status: 403 });
-        // }
+
+        if (!session) {
+            return new NextResponse('Unauthenticated', { status: 403 });
+        }
 
         const body = await req.json();
         const { institute, user, type } = body;
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
                 },
             });
 
-            return NextResponse.json(users);
+            return NextResponse.json(users, { status: 200 });
         }
         if (user === 'teacher') {
             const users = await db.teachers.findMany({
@@ -36,24 +36,13 @@ export async function POST(req: Request) {
                 },
             });
 
-            return NextResponse.json(users);
+            return NextResponse.json(users, { status: 200 });
         }
-        if (user === 'principal') {
-            const users = await db.principals.findMany({
-                where: {
-                    institute: {
-                        institute_type: institute,
-                        type: type,
-                    },
-                },
-            });
-
-            return NextResponse.json(users);
-        }
+        return NextResponse.json('data not found', { status: 403 });
     } catch (error) {
         console.log(error);
         return new NextResponse('Internal error', { status: 500 });
-    }finally{
-        db.$disconnect()
+    } finally {
+        db.$disconnect();
     }
 }

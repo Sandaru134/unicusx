@@ -19,8 +19,9 @@ const SubjectPage = () => {
 
     const [recordsData, setRecordsData] = useState([]);
     const [subject, setSubject] = useState<any>([]);
-    const [selectedType, setSelectedType] = useState('');
-    const [selectedSubType, setSelectedSubType] = useState('');
+    const [instituteType, setInstituteType] = useState('');
+    const [category, setCategory] = useState('');
+
     const [search, setSearch] = useState('');
     const [selectedSubject, setSelectedSubject] = useState<any>(null);
     const {
@@ -77,7 +78,6 @@ const SubjectPage = () => {
 
     const fetchData = async () => {
         const data = await fetchSubject();
-        console.log("subject data",data);
         setSubject(data);
     };
 
@@ -89,64 +89,56 @@ const SubjectPage = () => {
         setRecordsData(subject);
     }, [subject]);
 
-    // filter base on dropdowns
     useEffect(() => {
-        const filteredData = subject.filter((item: { institute_type: string; category: string }) => {
-            // Show all if no filters selected
-            if ((!selectedType || selectedType === 'all') && (!selectedSubType || selectedSubType === 'all')) {
-                return true;
-            }
+        const filterData = () => {
+            return subject.filter((item: any) => {
+                // Filter based on year
+                const instituteTypeMatch = !instituteType || instituteType === 'all' ? true : item.institute_type === instituteType;
 
-            // Filter based on the first dropdown selection
-            const typeMatch = selectedType && selectedType !== 'all' ? item.institute_type === selectedType : true;
+                // Filter based on class
+                const categoryMatch = !category || category === 'all' ? true : item.category === category;
 
-            // Filter based on the second dropdown selection
-            const subTypeMatch = selectedSubType && selectedSubType !== 'all' ? item.category === selectedSubType : true;
-
-            return typeMatch && subTypeMatch;
+                return instituteTypeMatch && categoryMatch;
+            });
+        };
+        const searchFilteredData = filterData().filter((item: any) => {
+            const searchMatch = item.name.toLowerCase().includes(search.toLowerCase());
+            return searchMatch;
         });
-        setRecordsData(filteredData);
-    }, [subject, selectedType, selectedSubType]);
-    
 
-    // search box
-    const handleSearch = (value: string) => {
-        setSearch(value);
-        const filteredData = subject.filter((item: { name: string }) => item.name.toLowerCase().includes(value.toLowerCase()));
-        setRecordsData(filteredData);
-    };
+        setRecordsData(searchFilteredData);
+    }, [subject, category, instituteType, search]);
 
     const items = [
         {
             key: '0',
             label: (
-                <Button type="text" className="flex flex-row items-center gap-3">
+                <a type="text" className="flex w-[100px] flex-row items-center gap-3">
                     <BsEye /> View
-                </Button>
+                </a>
             ),
             onClick: (record: any) => handleView(record),
         },
         {
             key: '1',
             label: (
-                <Button type="text" className="flex flex-row items-center gap-3">
+                <a type="text" className="flex w-[100px] flex-row items-center gap-3">
                     <BsPencil /> Edit
-                </Button>
+                </a>
             ),
             onClick: (record: any) => fetchToUpdate(record),
         },
         {
             key: '2', // Use a unique key here (avoid gaps)
             label: (
-                <Button type="text" danger className="flex w-[150px] flex-row items-center gap-3">
-                    <BsTrash /> Delete
-                </Button>
+                <a type="text" className="flex w-[100px] flex-row items-center gap-3">
+                    <BsTrash fill="red" /> <span className="text-red-500">Delete</span>
+                </a>
             ),
             onClick: (record: any) => handleDelete(record.subject_id),
         },
     ];
 
-  
     // Create Subject
     const submitForm = async (data: z.infer<typeof FormSchema>) => {
         try {
@@ -204,47 +196,51 @@ const SubjectPage = () => {
         }
     };
 
+    const handleSearch = (value: string) => {
+        setSearch(value);
+    };
+
     return (
         <div className="mx-auto">
-            <div className="h-[150px] w-full rounded-md bg-white">
+            <div className="h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <Space wrap className="pl-3">
                     <Select
                         defaultValue="Select School"
-                        style={{ width: 355 }}
+                        style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
-                            { value: 'preSchool', label: 'pre-School' },
+                            { value: 'preSchool', label: 'Pre-School' },
                             { value: 'school', label: 'School' },
                             { value: 'piriven', label: 'Piriven' },
                         ]}
-                        onChange={(value) => setSelectedType(value)}
+                        onChange={(value) => setInstituteType(value)}
                     />
                     <Select
                         defaultValue="Type"
-                        style={{ width: 355 }}
+                        style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
                             { value: 'primary', label: 'Primary' },
                             { value: 'secondary', label: 'Secondary' },
                             { value: 'collegiate', label: 'Collegiate' },
                         ]}
-                        onChange={(value) => setSelectedSubType(value)}
+                        onChange={(value) => setCategory(value)}
                     />
                 </Space>
             </div>
-            <div className="mt-5 bg-white">
-                <div className="mx-auto flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white">
+            <div className="mt-3 rounded-xl bg-white shadow-lg">
+                <div className="mx-auto mb-6 mr-5 flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white pt-6">
                     <input className="form-input h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                     <button className="btn bg-blue-600 text-white" onClick={() => setAddSubjectModal(true)}>
                         Add new subject
                     </button>
                 </div>
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="Subject" dataIndex="name" key="name" className="justify-start self-start font-semibold" />
+                    <Column title="SUBJECT" dataIndex="name" key="name" className="justify-start self-start font-semibold" />
                     <Column
                         className="flex justify-end self-end "
-                        title="Action"
+                        title="ACTION"
                         key="action"
                         render={(_, record: any) => (
                             <Dropdown
@@ -284,7 +280,7 @@ const SubjectPage = () => {
                                 <div className="fixed inset-0" />
                             </Transition.Child>
                             <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                                <div className="flex min-h-screen items-start justify-center px-4">
+                                <div className="flex min-h-screen items-center justify-center px-4">
                                     <Transition.Child
                                         as={Fragment}
                                         enter="ease-out duration-300"
@@ -301,8 +297,8 @@ const SubjectPage = () => {
                                                     <BsXLg />
                                                 </button>
                                             </div>
-                                            <div className="p-5">
-                                                <form className="space-y-3 dark:text-white" onSubmit={handleSubmit(submitForm)}>
+                                            <div className="flex items-center justify-center p-5">
+                                                <form className="items-center justify-center space-y-3 dark:text-white" onSubmit={handleSubmit(submitForm)}>
                                                     <label>Subject Name</label>
                                                     <div className="relative text-white-dark">
                                                         <input
@@ -319,7 +315,7 @@ const SubjectPage = () => {
                                                             style={{ width: 355 }}
                                                             {...register('institute_type')}
                                                             options={[
-                                                                { value: 'preSchool', label: 'pre-School' },
+                                                                { value: 'preSchool', label: 'Pre-School' },
                                                                 { value: 'school', label: 'School' },
                                                                 { value: 'piriven', label: 'Piriven' },
                                                             ]}
@@ -340,9 +336,11 @@ const SubjectPage = () => {
                                                             onChange={(value) => setValue('category', value)}
                                                         />
                                                     </Space>
-                                                    <button type="submit" className="bg-green-600 w-[130px] rounded-md p-1 text-white font-semibold items-center">
-                                                        Save
-                                                    </button>
+                                                    <div className="flex w-full items-center justify-center pt-2">
+                                                        <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                            Save
+                                                        </button>
+                                                    </div>
                                                 </form>
                                             </div>
                                         </Dialog.Panel>
@@ -367,7 +365,7 @@ const SubjectPage = () => {
                                 <div className="fixed inset-0" />
                             </Transition.Child>
                             <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                                <div className="flex min-h-screen items-start justify-center px-4">
+                                <div className="flex min-h-screen items-center justify-center px-4">
                                     <Transition.Child
                                         as={Fragment}
                                         enter="ease-out duration-300"
@@ -427,7 +425,7 @@ const SubjectPage = () => {
                                 <div className="fixed inset-0" />
                             </Transition.Child>
                             <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                                <div className="flex min-h-screen items-start justify-center px-4">
+                                <div className="flex min-h-screen items-center justify-center px-4">
                                     <Transition.Child
                                         as={Fragment}
                                         enter="ease-out duration-300"
@@ -482,9 +480,11 @@ const SubjectPage = () => {
                                                             onChange={(value) => handleSelectChange('category', value)}
                                                         />
                                                     </Space>
-                                                    <button type="submit" className="bg-green-600 w-[130px] rounded-md p-1 text-white font-semibold items-center">
-                                                        Save Changes
-                                                    </button>
+                                                    <div className="flex w-full items-center justify-center pt-2">
+                                                        <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                            Save Change
+                                                        </button>
+                                                    </div>
                                                 </form>
                                             </div>
                                         </Dialog.Panel>

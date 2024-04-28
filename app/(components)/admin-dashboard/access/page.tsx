@@ -1,6 +1,6 @@
 'use client';
 import { Dialog, Transition } from '@headlessui/react';
-import { Button, Select, Space, Table } from 'antd';
+import { Select, Space, Table } from 'antd';
 import Column from 'antd/es/table/Column';
 import axios from 'axios';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
@@ -29,7 +29,7 @@ const AccessPage = () => {
 
     useEffect(() => {
         setRecordsData(responseData);
-    }, [responseData,filteredData]);
+    }, [responseData, filteredData]);
 
     // search box
     const handleSearch = (value: string) => {
@@ -77,56 +77,6 @@ const AccessPage = () => {
         }
     };
 
-    // const getSubjectDataIndex = (record: { student_name: any; subject: any }) => {
-    //     if (record.student_name) {
-    //         return record.student_name;
-    //     } else if (record.subject) {
-    //         return record.subject;
-    //     } else {
-    //         return 'N/A'; // or whatever default value you prefer
-    //     }
-    // };
-
-    // const renderParentTeacherNameColumn = (text: any, record: { student_index: any; teacherName: any }) => {
-    //     if (record.student_index) {
-    //         return record.student_index;
-    //     } else if (record.teacherName) {
-    //         return record.teacherName;
-    //     } else {
-    //         return 'N/A'; // or whatever default value you prefer
-    //     }
-    // };
-
-    // const columns = [
-    //     {
-    //         title: 'Name',
-    //         key: 'subject',
-    //         width: '20%',
-    //         className: 'justify-start self-start font-semibold',
-    //         render: (text: any, record: any) => <span>{getSubjectDataIndex(record)}</span>,
-    //     },
-    //     {
-    //         title: 'US ID',
-    //         key: 'parentTeacherName',
-    //         className: 'justify-start self-start font-semibold',
-    //         align: 'left', // Add this line,
-    //         render: renderParentTeacherNameColumn,
-    //     },
-    //     {
-    //         title: 'Action',
-    //         className: 'justify-end self-end font-semibold',
-    //         align: 'right',
-    //         key: 'action',
-    //         render: (_: any, record: { student_index: any }) => (
-    //             <Space size="middle">
-    //                 <button onClick={() => handleEdit(record.student_index)}>
-    //                     <BsPencil />
-    //                 </button>
-    //             </Space>
-    //         ),
-    //     },
-    // ];
-
     const handleTogglePassword = () => {
         setShowPassword(!showPassword);
     };
@@ -138,9 +88,6 @@ const AccessPage = () => {
     // update password
     const submitPasswordForm = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
-        console.log('Password:', editPassword.password);
-        console.log('Confirm Password:', editPassword.ConfirmPassword);
 
         if (editPassword.password !== editPassword.ConfirmPassword) {
             toast.error('Passwords do not match');
@@ -164,16 +111,15 @@ const AccessPage = () => {
 
     return (
         <div className="mx-auto">
-            <div className="h-[150px] w-full items-center rounded-md bg-white">
+            <div className="h-[150px] w-full items-center rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
-                <form onSubmit={getFilteredData}>
+                <form onSubmit={getFilteredData} className="flex flex-row justify-between">
                     <Space wrap className="pl-3">
                         <Select
                             defaultValue="Select School"
-                            style={{ width: 355 }}
+                            style={{ width: 300 }}
                             options={[
-                                { value: 'all', label: 'All' },
-                                { value: 'preSchool', label: 'pre-School' },
+                                { value: 'preSchool', label: 'Pre-School' },
                                 { value: 'school', label: 'School' },
                                 { value: 'piriven', label: 'Piriven' },
                             ]}
@@ -181,20 +127,17 @@ const AccessPage = () => {
                         />
                         <Select
                             defaultValue="User"
-                            style={{ width: 355 }}
+                            style={{ width: 300 }}
                             options={[
-                                { value: 'all', label: 'All' },
                                 { value: 'student', label: 'Student' },
                                 { value: 'teacher', label: 'Teacher' },
-                                { value: 'principle', label: 'Principle' },
                             ]}
                             onChange={(value) => handleSelectChange('user', value)}
                         />
                         <Select
                             defaultValue="Type"
-                            style={{ width: 355 }}
+                            style={{ width: 300 }}
                             options={[
-                                { value: 'all', label: 'All' },
                                 { value: 'government', label: 'Government' },
                                 { value: 'semi government', label: 'Semi Goverment' },
                                 { value: 'private', label: 'Private' },
@@ -203,16 +146,15 @@ const AccessPage = () => {
                             onChange={(value) => handleSelectChange('type', value)}
                         />
                     </Space>
-                    <button className="text-md ml-5 w-[150px] rounded-md bg-blue-600 p-2 font-semibold text-white">Filter</button>
+                    <button className="text-md ml-5 mr-3 w-[150px] rounded-md bg-blue-600 p-1.5 font-semibold text-white">Filter</button>
                 </form>
             </div>
-            <div className="mt-5 bg-white">
-                <div className="mx-auto flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white">
+            <div className="mt-3 rounded-xl bg-white shadow-lg">
+                <div className="mx-auto mb-6 mr-5 flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white pt-6">
                     <input className="form-input h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                 </div>
-                {/* <Table className="items-center justify-between bg-white md:ml-5 md:mr-5" dataSource={responseData} columns={columns} /> */}
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="User" dataIndex="full_name" key="full_name" width="30%" className="justify-start self-start font-semibold" />
+                    <Column title="USER" dataIndex="full_name" key="full_name" width="30%" className="justify-start self-start font-semibold" />
                     <Column title="US ID" dataIndex="index" key="index" align="left" className="justify-start self-start font-semibold" />
                     <Column
                         title="US ID"
@@ -244,7 +186,7 @@ const AccessPage = () => {
                                 <div className="fixed inset-0" />
                             </Transition.Child>
                             <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                                <div className="flex min-h-screen items-start justify-center px-4">
+                                <div className="flex min-h-screen items-center justify-center px-4">
                                     <Transition.Child
                                         as={Fragment}
                                         enter="ease-out duration-300"
@@ -291,9 +233,11 @@ const AccessPage = () => {
                                                         </button>
                                                     </div>
 
-                                                    <button type="submit" className="w-[130px] items-center rounded-md bg-green-600 p-1 font-semibold text-white">
-                                                        Save Changes
-                                                    </button>
+                                                    <div className="flex w-full items-center justify-center pt-2">
+                                                        <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                            Save
+                                                        </button>
+                                                    </div>
                                                 </form>
                                             </div>
                                         </Dialog.Panel>

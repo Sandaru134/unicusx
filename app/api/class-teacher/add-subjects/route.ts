@@ -15,8 +15,22 @@ export async function POST(req: Request) {
 
         const { grade_level, class_name, subject_id } = body;
 
+        const institute_id = await db.teachers.findUnique({
+            where: {
+                teacher_id: session.user.id,
+            },
+            select: {
+                institute_id: true,
+            },
+        });
+
+        if (!institute_id) {
+            return new Response('Institute not found', { status: 403 });
+        }
+
         const classId = await db.classes.findFirst({
             where: {
+                institute_id: institute_id.institute_id,
                 grade_level: grade_level,
                 class_name: class_name,
             },
@@ -29,29 +43,20 @@ export async function POST(req: Request) {
             return new Response('Class not found', { status: 403 });
         }
 
-        const institute_id = await db.teachers.findUnique({
-            where: {
-                teacher_id: session.user.id,
-            },
-            select: {
-                institute_id: true,
-            },
-        });
-
         const students = await db.student_subjects_Status.findMany({
             where: {
-                subject_id: subject_id,
                 institute_id: institute_id?.institute_id,
-                completed: false,
+                subject_id: subject_id,
                 student: {
                     class_id: classId?.class_id,
                 },
+                // added:false
             },
             include: {
                 student: true,
             },
         });
-        console.log(students);
+
         return NextResponse.json(students, { status: 200 });
     } catch (error) {
         console.log(error);

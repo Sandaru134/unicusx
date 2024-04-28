@@ -13,8 +13,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User_sequence {
-  id Int @id @default(autoincrement())
+model Unicus_User_sequence {
+  number Int @id
+}
+
+model Institute_User_sequence {
+  number Int @id
+}
+
+model Student_User_sequence {
+  number Int @id
+}
+
+model Teacher_User_sequence {
+  number Int @id
+}
+
+model Principal_User_sequence {
+  number Int @id
 }
 
 model unicus_admin {
@@ -35,54 +51,63 @@ model Institute_admin {
 }
 
 model Institutes {
-  institute_id      String                     @id @default(uuid())
-  institute_initial String                     @unique
-  institute_name    String
-  gender            String
-  institute_type    String
-  type              String
-  from              Int
-  to                Int
-  contact_number    Int
-  createdAt         DateTime                   @default(now())
-  updatedAt         DateTime                   @updatedAt
-  institute_admin   Institute_admin?
-  terms             Terms[]
-  subjects          Subjects[]
-  teachers          Teachers[]
-  classes           Classes[]
-  students          Students[]
-  principal         Principals[]
-  subject_status    Institute_subject_status[]
-  student_subject   Student_subjects_Status[]
-  marks             marks[]
-  report            Report[]
+  institute_id    String                     @id @default(uuid())
+  institute_name  String
+  gender          String
+  institute_type  String
+  type            String
+  from            Int
+  to              Int
+  contact_number  Int
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+  institute_admin Institute_admin?
+  terms           Terms[]
+  subjects        Subjects[]
+  teachers        Teachers[]
+  classes         Classes[]
+  students        Students[]
+  principal       Principals[]
+  subject_status  Institute_subject_status[]
+  student_subject Student_subjects_Status[]
+  marks           Marks[]
+  report          Report[]
+  term_class      Term_class[]
+  full_report     Final_Report[]
 }
 
 model Terms {
-  term_id         String                    @id @default(uuid())
-  term_name       String
-  start           String
-  end             String
-  createdAt       DateTime                  @default(now())
-  updatedAt       DateTime                  @updatedAt
-  institute       Institutes                @relation(fields: [institute_id], references: [institute_id])
-  institute_id    String
-  term_class      Term_class[]
-  student_subject Student_subjects_Status[]
-  marks           marks[]
-  completed       Boolean                   @default(false)
-  report          Report[]
+  term_id      String         @id @default(uuid())
+  term_name    String
+  start        String
+  end          String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  institute    Institutes     @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
+  institute_id String
+  term_class   Term_class[]
+  marks        Marks[]
+  completed    Boolean        @default(false)
+  report       Report[]
+  full_report  Final_Report[]
 }
 
 model Term_class {
-  id               String  @id @default(uuid())
-  teacher_signed   Boolean @default(false)
-  principal_signed Boolean @default(false)
+  id               String      @id @default(uuid())
+  institute_id     String
+  institute        Institutes  @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
+  teacher_signed   Boolean     @default(false)
+  principal_signed Boolean     @default(false)
+  teacher_id       String?
+  teacher          Teachers?   @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+  principal_id     String?
+  principal        Principals? @relation(fields: [principal_id], references: [principal_id], onDelete: Cascade)
   term_id          String
-  term             Terms   @relation(fields: [term_id], references: [term_id])
+  term             Terms       @relation(fields: [term_id], references: [term_id], onDelete: Cascade)
   class_id         String
-  class            Classes @relation(fields: [class_id], references: [class_id])
+  class            Classes     @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }
 
 model Subjects {
@@ -96,6 +121,8 @@ model Subjects {
   institute_status Institute_subject_status[]
   teachers         teacher_subjects[]
   students         Student_subjects_Status[]
+  full_report      Final_Report[]
+  marks            Marks[]
 }
 
 model Institute_subject_status {
@@ -103,7 +130,7 @@ model Institute_subject_status {
   institute_id String
   subject_id   String
   status       Boolean    @default(false)
-  institute    Institutes @relation(fields: [institute_id], references: [institute_id])
+  institute    Institutes @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
   subject      Subjects   @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
 }
 
@@ -113,14 +140,14 @@ model Classes {
   class_name      String
   createdAt       DateTime                  @default(now())
   updatedAt       DateTime                  @updatedAt
-  institute       Institutes                @relation(fields: [institute_id], references: [institute_id])
+  institute       Institutes                @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
   institute_id    String
   teacher         Teachers[]
   students        Students[]
   subjects        teacher_subjects[]
   term_class      Term_class[]
   student_subject Student_subjects_Status[]
-  marks           marks[]
+  marks           Marks[]
   report          Report[]
 }
 
@@ -143,43 +170,46 @@ model Teachers {
   class               Classes?           @relation(fields: [class_id], references: [class_id], onUpdate: Cascade)
   class_id            String?            @unique
   teacher_subjects    teacher_subjects[]
+  term_class          Term_class[]
+  final_report        Final_Report[]
 }
 
 model teacher_subjects {
   id         String   @id @default(uuid())
   teacher_id String
-  teacher    Teachers @relation(fields: [teacher_id], references: [teacher_id])
-  class      Classes  @relation(fields: [class_id], references: [class_id])
+  teacher    Teachers @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+  class      Classes  @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
   class_id   String
   medium     String
-  subject    Subjects @relation(fields: [subject_id], references: [subject_id])
+  subject    Subjects @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
   subject_id String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
 
 model Principals {
-  principal_id        String     @id @default(uuid())
-  index               String     @unique
-  nic                 String     @unique
-  password            String
+  principal_id        String         @id @default(uuid())
+  index               String         @unique
+  nic                 String         @unique
   full_name           String
   gender              String
   type                String
   grade               String
   contact_number      Int
-  left                Boolean    @default(false)
+  left                Boolean        @default(false)
   date_of_resignation DateTime?
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
-  institute           Institutes @relation(fields: [institute_id], references: [institute_id])
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  institute           Institutes     @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
   institute_id        String
+  term_class          Term_class[]
+  final_report        Final_Report[]
 }
 
 model Students {
   student_id          String                    @id @default(uuid())
   index               String                    @unique
-  nic                 String?                   @unique
+  nic                 String?
   full_name           String
   gender              String
   date_of_birth       String
@@ -189,63 +219,100 @@ model Students {
   contact_number      Int
   left                Boolean                   @default(false)
   date_of_resignation DateTime?
-  classes             Classes                   @relation(fields: [class_id], references: [class_id])
+  classes             Classes                   @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
   class_id            String
-  institute           Institutes                @relation(fields: [institute_id], references: [institute_id])
+  institute           Institutes                @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
   institute_id        String
   createdAt           DateTime                  @default(now())
   updatedAt           DateTime                  @updatedAt
   subjects            Student_subjects_Status[]
   report              Report[]
+  marks               Marks[]
+  full_report         Final_Report[]
 }
 
 model Student_subjects_Status {
   id           String     @id @default(uuid())
   student_id   String
-  student      Students   @relation(fields: [student_id], references: [student_id])
+  student      Students   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
   subject_id   String
-  subject      Subjects   @relation(fields: [subject_id], references: [subject_id])
+  subject      Subjects   @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
   institute_id String
-  institute    Institutes @relation(fields: [institute_id], references: [institute_id])
+  institute    Institutes @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
   added        Boolean    @default(false)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   class_id     String
-  class        Classes    @relation(fields: [class_id], references: [class_id])
-  marks        marks[]
-  Terms        Terms?     @relation(fields: [terms_id], references: [term_id])
-  terms_id     String?
-  completed    Boolean    @default(false)
+  class        Classes    @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
 }
 
-model marks {
-  id                 String                  @id @default(uuid())
+model Marks {
+  id                 String     @id @default(uuid())
+  student_id         String
+  student            Students   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
   student_subject_id String
-  student_subject    Student_subjects_Status @relation(fields: [student_subject_id], references: [id], onDelete: Cascade)
+  subject_id         String
+  subject            Subjects   @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
   term_id            String
-  terms              Terms                   @relation(fields: [term_id], references: [term_id])
+  terms              Terms      @relation(fields: [term_id], references: [term_id], onDelete: Cascade)
   class_id           String
-  class              Classes                 @relation(fields: [class_id], references: [class_id])
+  class              Classes    @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
   mark               Int?
   institute_id       String
-  institute          Institutes              @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
+  institute          Institutes @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
+  absent             Boolean    @default(false)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 }
 
 model Report {
-  id                   String     @id @default(uuid())
+  id                   String         @id @default(uuid())
   institute_id         String
-  institute            Institutes @relation(fields: [institute_id], references: [institute_id])
+  institute            Institutes     @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
   student_id           String
-  student              Students   @relation(fields: [student_id], references: [student_id])
+  student              Students       @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
   term_id              String
-  terms                Terms      @relation(fields: [term_id], references: [term_id])
+  terms                Terms          @relation(fields: [term_id], references: [term_id], onDelete: Cascade)
   class_id             String
-  class                Classes    @relation(fields: [class_id], references: [class_id])
-  completed            Boolean?   @default(false)
-  class_teacher_signed Boolean?   @default(false)
-  principal_signed     Boolean?   @default(false)
-  createdAt            DateTime   @default(now())
-  updatedAt            DateTime   @updatedAt
+  class                Classes        @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
+  completed            Boolean?       @default(false)
+  class_teacher_signed Boolean?       @default(false)
+  principal_signed     Boolean?       @default(false)
+  total_marks          Int?
+  total_students       Int?
+  total_subjects       Int?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  final_report         Final_Report[]
+}
+
+model Final_Report {
+  id                    String     @id @default(uuid())
+  report_id             String
+  report                Report     @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  institute_id          String
+  institute             Institutes @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
+  student_id            String
+  student               Students   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  term_id               String
+  terms                 Terms      @relation(fields: [term_id], references: [term_id], onDelete: Cascade)
+  subject_id            String
+  subject               Subjects   @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
+  mark                  Int?
+  change                Int?
+  pass                  String
+  total_marks           Int?
+  highest_total_mark    Int
+  total_students        Int
+  average               Float
+  rank                  Int?
+  teacher_id            String
+  teacher               Teachers   @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+  teacher_signed_date   DateTime?
+  principal_id          String
+  principal             Principals @relation(fields: [principal_id], references: [principal_id], onDelete: Cascade)
+  principal_signed_date DateTime?
+  next_term_start_date  String?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
 }

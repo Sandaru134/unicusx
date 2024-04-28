@@ -1,16 +1,16 @@
-import ComponentsDashboardAnalytics from '@/components/dashboard/components-dashboard-analytics';
-import { Metadata } from 'next';
-import React from 'react';
-import CoverLogin from '../(auth)/login/page';
-
-export const metadata: Metadata = {
-    title: 'Sales Admin',
-};
+'use client';
+import React, { useEffect } from 'react';
+import Loading from '@/components/layouts/loading';
+import { useRouter } from 'next/navigation';
 
 const Sales = () => {
+    const router = useRouter();
+    useEffect(() => {
+        router.push('/login');
+    }, [router]);
     return (
         <div>
-            <CoverLogin />
+            <Loading />
         </div>
     );
 };

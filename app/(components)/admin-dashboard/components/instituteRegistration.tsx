@@ -14,6 +14,7 @@ import * as z from 'zod';
 import toast, { Toaster } from 'react-hot-toast';
 
 import { fetchInstitutes, handleInstituteDelete } from '@/utils';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
 const FormSchema = z.object({
     institute_name: z.string().min(1, 'Name is required').optional(),
@@ -34,21 +35,23 @@ const FormSchema = z.object({
             return parsedContactNumber;
         })
         .optional(),
-    institute_initial: z.string().min(1, 'Prefix is required').optional(),
     password: z.string().min(1, 'Password is required').optional(),
 });
 
 const InstituteRegistration = () => {
-    const [institute, setInstitute] =useState<any>([]);
+    const [institute, setInstitute] = useState<any>([]);
     const [recordsData, setRecordsData] = useState([]);
     const [search, setSearch] = useState('');
     const [editModalVisible, setEditModalVisible] = useState(false);
-    const [selectedType, setSelectedType] = useState('');
-    const [selectedSubType, setSelectedSubType] = useState('');
     const [selectedInstitute, setSelectedInstitute] = useState<any>([]);
     const [viewModalVisible, setViewModalVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const [selectedItem, setSelectedItem] = useState<any>(null);
+
+    const [type, setType] = useState('');
+    const [instituteType, setInstituteType] = useState('');
+
+    const [showPassword, setShowPassword] = useState(false);
 
     const [updateModalView, setUpdateModalView] = useState(false);
     const [formData, setFormData] = useState({
@@ -56,27 +59,14 @@ const InstituteRegistration = () => {
         contact_number: '',
         gender: '',
         institute_type: '',
-        institute_initial: '',
         type: '',
         from: '',
         to: '',
     });
 
-    console.log("now",recordsData);
-    
-
-    const handleSearch = (value: string) => {
-        setSearch(value);
-        const filteredData = institute.filter((item: { institute_name: string; institute_id: string; }) => item.institute_name.toLowerCase().includes(value.toLowerCase()) || item.institute_id.toLowerCase().includes(value.toLowerCase()));
-        setRecordsData(filteredData);
-    };
-
-    console.log('records data:', recordsData);
-
     const fetchData = async () => {
         const data = await fetchInstitutes();
         setInstitute(data);
-        console.log(data);
     };
 
     useEffect(() => {
@@ -88,22 +78,24 @@ const InstituteRegistration = () => {
     }, [institute]);
 
     useEffect(() => {
-        const filteredData = institute.filter((item: { institute_type: string; type: string; }) => {
-            // Show all if no filters selected
-            if ((!selectedType || selectedType === 'all') && (!selectedSubType || selectedSubType === 'all')) {
-                return true;
-            }
+        const filterData = () => {
+            return institute.filter((item: any) => {
+                // Filter based on year
+                const instituteTypeMatch = !instituteType || instituteType === 'all' ? true : item.institute_type === instituteType;
 
-            // Filter based on the first dropdown selection
-            const typeMatch = selectedType && selectedType !== 'all' ? item.institute_type === selectedType : true;
+                // Filter based on class
+                const typeMatch = !type || type === 'all' ? true : item.type === type;
 
-            // Filter based on the second dropdown selection
-            const subTypeMatch = selectedSubType && selectedSubType !== 'all' ? item.type === selectedSubType : true;
-
-            return typeMatch && subTypeMatch;
+                return instituteTypeMatch && typeMatch;
+            });
+        };
+        const searchFilteredData = filterData().filter((item: any) => {
+            const searchMatch = item.institute_name.toLowerCase().includes(search.toLowerCase()) || item.institute_admin?.index.toLowerCase().includes(search.toLowerCase());
+            return searchMatch;
         });
-        setRecordsData(filteredData);
-    }, [institute, selectedType, selectedSubType]);
+
+        setRecordsData(searchFilteredData);
+    }, [institute, type, instituteType, search]);
 
     const {
         register,
@@ -117,8 +109,6 @@ const InstituteRegistration = () => {
             institute_name: '',
             contact_number: undefined,
             gender: 'Select Gender',
-            institute_type: 'Select School',
-            institute_initial: '',
             type: 'Select Type',
             from: 0,
             to: 0,
@@ -143,7 +133,7 @@ const InstituteRegistration = () => {
             setSelectedInstitute(response.data);
             setViewModalVisible(true);
         } catch (error) {
-            console.error('Error fetching institute details:', error);
+            toast.error('Error fetching institute details');
         } finally {
             setLoading(false);
         }
@@ -156,7 +146,6 @@ const InstituteRegistration = () => {
             contact_number: recordId.contact_number,
             gender: recordId.gender,
             institute_type: recordId.institute_type,
-            institute_initial: recordId.institute_initial,
             type: recordId.type,
             from: recordId.from,
             to: recordId.to,
@@ -170,9 +159,9 @@ const InstituteRegistration = () => {
         }
         setFormData({ ...formData, [name]: value });
     };
-    
+
     // For input fields
-    const handleInputChange = (e: { target: { name: any; value: any; }; }) => {
+    const handleInputChange = (e: { target: { name: any; value: any } }) => {
         const { name, value } = e.target;
         handleEditFormChange(name, value);
     };
@@ -188,14 +177,14 @@ const InstituteRegistration = () => {
             setLoading(true);
             const response = await axios.patch(`/api/unicus-admin/institute/${selectedItem?.institute_id}`, formData);
             if (response.status === 201) {
-                toast.success("Item updated successfully");
+                toast.success('Item updated successfully');
                 setUpdateModalView(false);
                 reset();
             } else {
-                throw new Error("Failed to update item");
+                throw new Error('Failed to update item');
             }
         } catch (error) {
-            console.error('Error updating institute details:', error);
+            toast.error('Error updating institute details:');
         } finally {
             setLoading(false);
         }
@@ -205,33 +194,39 @@ const InstituteRegistration = () => {
         {
             key: '0',
             label: (
-                <Button type="text" className="flex flex-row items-center gap-3">
+                <a type="text" className="flex w-[100px] flex-row items-center gap-3">
                     <BsEye /> View
-                </Button>
+                </a>
             ),
             onClick: (recordId: any) => handleView(recordId.institute_id), // Pass record.id directly
         },
         {
             key: '1',
             label: (
-                <Button type="text" className="flex flex-row items-center gap-3">
+                <a type="text" className="flex w-[100px] flex-row items-center gap-3">
                     <BsPencil /> Edit
-                </Button>
+                </a>
             ),
             onClick: (recordId: any) => fetchToUpdate(recordId), // Pass record.id directly
         },
         {
             key: '2', // Use a unique key here (avoid gaps)
             label: (
-                <Button type="text" danger className="flex flex-row items-center gap-3">
-                    <BsTrash /> Delete
-                </Button>
+
+                <a type="text" className="flex w-[100px] flex-row items-center gap-3">
+                    <BsTrash fill='red' /> <span className='text-red-500'>Delete</span>
+                </a>
             ),
-            onClick: (recordId: { institute_id: any; }) => handleDelete(recordId.institute_id), // Pass record.id directly
+            onClick: (recordId: { institute_id: any }) => handleDelete(recordId.institute_id), // Pass record.id directly
         },
     ];
 
     const submitForm = async (data: z.infer<typeof FormSchema>) => {
+        const contactNumber = String(data['contact_number']); // Convert to string
+        if (!/^\d{9}$/.test(contactNumber)) {
+            toast.error('Contact number must have exactly 10 digits!');
+            return;
+        }
         try {
             const response = await axios.post('/api/unicus-admin/institute', data, {
                 headers: { 'Content-Type': 'application/json' },
@@ -249,49 +244,57 @@ const InstituteRegistration = () => {
         }
     };
 
+    const handleSearch = (value: string) => {
+        setSearch(value);
+    };
+
+    const handleTogglePassword = () => {
+        setShowPassword(!showPassword);
+    };
+
     return (
         <div className="mx-auto">
-            <div className="h-[150px] w-full rounded-md bg-white">
+            <div className="h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
-                <Space wrap className='pl-3'>
+                <Space wrap className="gap-6 pl-3">
                     <Select
                         defaultValue="Select School"
-                        style={{ width: 355 }}
+                        style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
-                            { value: 'preSchool', label: 'pre-School' },
+                            { value: 'preSchool', label: 'Pre-School' },
                             { value: 'school', label: 'School' },
                             { value: 'piriven', label: 'Piriven' },
                         ]}
-                        onChange={(value) => setSelectedType(value)}
+                        onChange={(value) => setInstituteType(value)}
                     />
                     <Select
                         defaultValue="Type"
-                        style={{ width: 355 }}
+                        style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
                             { value: 'government', label: 'Government' },
-                            { value: 'semiGov', label: 'Semi gov' },
+                            { value: 'semi government', label: 'Semi government' },
                             { value: 'international', label: 'International' },
                             { value: 'Private', label: 'Private' },
                         ]}
-                        onChange={(value) => setSelectedSubType(value)}
+                        onChange={(value) => setType(value)}
                     />
                 </Space>
             </div>
-            <div className="mt-5 bg-white">
-                <div className="mx-auto flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white">
+            <div className="mt-3 rounded-xl bg-white shadow-lg">
+                <div className="mx-auto mb-6 mr-5 flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white pt-6">
                     <input className="form-input h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                     <button className="btn bg-blue-600 text-white" onClick={() => setEditModalVisible(true)}>
                         Add new institute
                     </button>
                 </div>
                 <Table dataSource={recordsData} className="bg-white md:ml-5 md:mr-5">
-                    <Column title="User" dataIndex="institute_name" key="institute_name" width='30%' className="justify-start self-start font-semibold" />
-                    <Column title="User ID" dataIndex="institute_initial" key="institute_initial" align='left' className="font-semibold" />
+                    <Column title="USER" dataIndex="institute_name" key="institute_name" width="30%" className="font-semibold" />
+                    <Column title="US ID" dataIndex={['institute_admin', 'index']} key="institute_initial" className="font-semibold" />
                     <Column
                         className="flex justify-end self-end "
-                        title="Action"
+                        title="ACTION"
                         key="action"
                         render={(_: any, record: any) => (
                             <Dropdown
@@ -332,7 +335,7 @@ const InstituteRegistration = () => {
                                 <div className="fixed inset-0" />
                             </Transition.Child>
                             <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                                <div className="flex min-h-screen items-start justify-center px-4">
+                                <div className="flex min-h-screen items-center justify-center px-4">
                                     <Transition.Child
                                         as={Fragment}
                                         enter="ease-out duration-300"
@@ -355,7 +358,7 @@ const InstituteRegistration = () => {
                                                     <div className="relative text-white-dark">
                                                         <input
                                                             {...register('institute_name')} // Use register for form field binding
-                                                            placeholder="Enter User ID"
+                                                            placeholder="Enter Institute Name"
                                                             className="form-input placeholder:text-white-dark"
                                                         />
                                                         {errors.institute_name && <span className="error text-red-500">{errors.institute_name.message}</span>}
@@ -383,7 +386,7 @@ const InstituteRegistration = () => {
                                                             style={{ width: 355 }}
                                                             {...register('institute_type')}
                                                             options={[
-                                                                { value: 'preSchool', label: 'pre-School' },
+                                                                { value: 'preSchool', label: 'Pre-School' },
                                                                 { value: 'school', label: 'School' },
                                                                 { value: 'piriven', label: 'Piriven' },
                                                             ]}
@@ -398,7 +401,7 @@ const InstituteRegistration = () => {
                                                             {...register('type')}
                                                             options={[
                                                                 { value: 'government', label: 'Government' },
-                                                                { value: 'semiGov', label: 'Semi gov' },
+                                                                { value: 'semiGov', label: 'Semi Government' },
                                                                 { value: 'international', label: 'International' },
                                                                 { value: 'Private', label: 'Private' },
                                                             ]}
@@ -418,7 +421,13 @@ const InstituteRegistration = () => {
                                                                 { value: '4', label: '4' },
                                                                 { value: '5', label: '5' },
                                                                 { value: '6', label: '6' },
-                                                                
+                                                                { value: '7', label: '7' },
+                                                                { value: '8', label: '8' },
+                                                                { value: '9', label: '9' },
+                                                                { value: '10', label: '10' },
+                                                                { value: '11', label: '11' },
+                                                                { value: '12', label: '12' },
+                                                                { value: '13', label: '13' },
                                                             ]}
                                                             onChange={(value) => setValue('from', Number(value))}
                                                         />
@@ -436,7 +445,13 @@ const InstituteRegistration = () => {
                                                                 { value: '4', label: '4' },
                                                                 { value: '5', label: '5' },
                                                                 { value: '6', label: '6' },
-
+                                                                { value: '7', label: '7' },
+                                                                { value: '8', label: '8' },
+                                                                { value: '9', label: '9' },
+                                                                { value: '10', label: '10' },
+                                                                { value: '11', label: '11' },
+                                                                { value: '12', label: '12' },
+                                                                { value: '13', label: '13' },
                                                             ]}
                                                             onChange={(value) => setValue('to', Number(value))}
                                                         />
@@ -450,28 +465,24 @@ const InstituteRegistration = () => {
                                                         />
                                                         {errors.contact_number && <span className="error text-red-500">{errors.contact_number.message}</span>}
                                                     </div>
-                                                    <label>Institute Prefix</label>
-                                                    <div className="relative text-white-dark">
-                                                        <input
-                                                            {...register('institute_initial')} // Use register for form field binding
-                                                            placeholder="Enter institute prefix"
-                                                            className="form-input placeholder:text-white-dark"
-                                                        />
-                                                        {errors.institute_initial && <span className="error text-red-500">{errors.institute_initial.message}</span>}
-                                                    </div>
                                                     <label>Institute Password</label>
                                                     <div className="relative text-white-dark">
                                                         <input
-                                                            type="password"
                                                             {...register('password')} // Use register for form field binding
                                                             placeholder="Enter password"
+                                                            type={showPassword ? 'text' : 'password'}
                                                             className="form-input placeholder:text-white-dark"
                                                         />
+                                                        <button type="button" className="password-toggle absolute right-2 top-1/2 -translate-y-1/2 transform" onClick={handleTogglePassword}>
+                                                            {showPassword ? <EyeIcon /> : <EyeOffIcon />}
+                                                        </button>
                                                         {errors.password && <span className="error text-red-500">{errors.password.message}</span>}
                                                     </div>
-                                                    <button type="submit" className="bg-green-600 w-[130px] rounded-md p-1 text-white font-semibold items-center">
-                                                        Save
-                                                    </button>
+                                                    <div className="flex w-full items-center justify-center pt-2">
+                                                        <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                            Save
+                                                        </button>
+                                                    </div>
                                                 </form>
                                             </div>
                                         </Dialog.Panel>
@@ -497,7 +508,7 @@ const InstituteRegistration = () => {
                                 <div className="fixed inset-0" />
                             </Transition.Child>
                             <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                                <div className="flex min-h-screen items-start justify-center px-4">
+                                <div className="flex min-h-screen items-center justify-center px-4">
                                     <Transition.Child
                                         as={Fragment}
                                         enter="ease-out duration-300"
@@ -583,17 +594,6 @@ const InstituteRegistration = () => {
                                                             className="form-input placeholder:text-white-dark"
                                                         />
                                                     </div>
-                                                    <label>Institute Prefix</label>
-                                                    <div className="relative text-white-dark">
-                                                        <input
-                                                            id="institute_name"
-                                                            type="text"
-                                                            value={selectedInstitute?.institute_initial || ''}
-                                                            readOnly
-                                                            placeholder="Enter User ID"
-                                                            className="form-input placeholder:text-white-dark"
-                                                        />
-                                                    </div>
                                                 </form>
                                             </div>
                                         </Dialog.Panel>
@@ -619,7 +619,7 @@ const InstituteRegistration = () => {
                                 <div className="fixed inset-0" />
                             </Transition.Child>
                             <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                                <div className="flex min-h-screen items-start justify-center px-4">
+                                <div className="flex min-h-screen items-center justify-center px-4">
                                     <Transition.Child
                                         as={Fragment}
                                         enter="ease-out duration-300"
@@ -722,7 +722,7 @@ const InstituteRegistration = () => {
                                                     <div className="relative text-white-dark">
                                                         <input
                                                             type="number"
-                                                            name='contact_number'
+                                                            name="contact_number"
                                                             maxLength={10}
                                                             defaultValue={formData.contact_number}
                                                             placeholder="Enter contact number"
@@ -731,20 +731,11 @@ const InstituteRegistration = () => {
                                                         />
                                                         {errors.contact_number && <span className="error text-red-500">{errors.contact_number.message}</span>}
                                                     </div>
-                                                    <label>Institute Prefix</label>
-                                                    <div className="relative text-white-dark">
-                                                        <input
-                                                            defaultValue={formData.institute_initial}
-                                                            name='institute_initial'
-                                                            placeholder="Enter institute prefix"
-                                                            className="form-input placeholder:text-white-dark"
-                                                            onChange={handleInputChange}
-                                                        />
-                                                        {errors.institute_initial && <span className="error text-red-500">{errors.institute_initial.message}</span>}
+                                                    <div className="flex w-full items-center justify-center pt-2">
+                                                        <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                            Save Change
+                                                        </button>
                                                     </div>
-                                                    <button type="submit" className="bg-green-600 w-[130px] rounded-md p-1 text-white font-semibold items-center">
-                                                        Save Changes
-                                                    </button>
                                                 </form>
                                             </div>
                                         </Dialog.Panel>

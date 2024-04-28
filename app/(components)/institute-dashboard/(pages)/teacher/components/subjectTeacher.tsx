@@ -35,8 +35,6 @@ const SubjectTeacher: React.FC<SubjectTeacherProps> = ({ onValuesChange }) => {
         setDropdownCount((prevCount) => prevCount + 1);
     };
 
-    console.log('subject data', fetchSubjectData);
-
     const handleSelectChange = (value: any, index: any, type: keyof SelectedValues) => {
         setSelectedValues((prevValues: SelectedValues[]) => {
             const updatedValues: SelectedValues[] = [...prevValues];

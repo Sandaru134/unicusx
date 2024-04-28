@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 
 const MainContainer = ({ children }: { children: React.ReactNode }) => {
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
-    return <div className={`${themeConfig.navbar} main-container bg-zinc-100 min-h-screen text-black dark:text-white-dark`}> {children}</div>;
+    return <div className={`${themeConfig.navbar} main-container bg-[#F7F8FA] min-h-screen text-black dark:text-white-dark`}> {children}</div>;
 };
 
 export default MainContainer;

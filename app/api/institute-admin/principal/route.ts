@@ -12,22 +12,43 @@ export async function POST(req: Request) {
             return new NextResponse('Unauthenticated', { status: 403 });
         }
         const body = await req.json();
-        const { nic, password, full_name, gender, type, grade, contact_number } = body;
+        const { nic, full_name, gender, type, grade, contact_number } = body;
 
-        const uniqueNumber = await db.user_sequence.create({
-            data: {},
+        let uniqueNumber;
+
+        const largestNumber = await db.principal_User_sequence.aggregate({
+            _max: {
+                number: true,
+            },
         });
+
+        if (largestNumber._max.number) {
+            let newNumber = largestNumber._max.number + 1;
+
+            uniqueNumber = await db.principal_User_sequence.create({
+                data: {
+                    number: newNumber,
+                },
+            });
+        } else {
+            let newNumber = 1;
+            uniqueNumber = await db.principal_User_sequence.create({
+                data: {
+                    number: newNumber,
+                },
+            });
+        }
+
         const prefix = 'USP';
 
-        const principal_index = `${prefix}${uniqueNumber.id}`;
+        const principal_index = `${prefix}${uniqueNumber.number}`;
 
-        const hashedPassword = await hash(password, 10);
+
 
         const newPrincipal = await db.principals.create({
             data: {
                 index: principal_index,
                 nic,
-                password:hashedPassword,
                 full_name,
                 gender,
                 type,
@@ -37,7 +58,7 @@ export async function POST(req: Request) {
             },
         });
 
-        return NextResponse.json(newPrincipal,{status:201})
+        return NextResponse.json(newPrincipal, { status: 201 });
     } catch (error) {
         console.log(error);
         return new NextResponse('Internal error', { status: 500 });
@@ -56,14 +77,15 @@ export async function GET(req: Request) {
 
         const principals = await db.principals.findMany({
             where: {
-                institute_id:session.user.id
-            }
-        })
-        return NextResponse.json(principals,{status:200})
-    }    catch (error) {
+                institute_id: session.user.id,
+                left:false
+            },
+        });
+        return NextResponse.json(principals, { status: 200 });
+    } catch (error) {
         console.log(error);
-        return new NextResponse('Internal error', { status: 500 }); 
-    }finally {
+        return new NextResponse('Internal error', { status: 500 });
+    } finally {
         db.$disconnect();
     }
 }

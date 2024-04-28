@@ -11,23 +11,43 @@ export async function POST(req: Request) {
         if (!session) {
             return new NextResponse('Unauthenticated', { status: 403 });
         }
-        console.log(session);
 
         const body = await req.json();
-        const { institute_initial, institute_name, gender, institute_type, type, from, to, contact_number, password } = body;
+        const { institute_name, gender, institute_type, type, from, to, contact_number, password } = body;
 
-        const uniqueNumber = await db.user_sequence.create({
-            data: {},
+        let uniqueNumber;
+
+        const largestNumber = await db.institute_User_sequence.aggregate({
+            _max: {
+                number: true,
+            },
         });
+
+        if (largestNumber._max.number) {
+            let newNumber = largestNumber._max.number + 1;
+
+            uniqueNumber = await db.institute_User_sequence.create({
+                data: {
+                    number: newNumber,
+                },
+            });
+        } else {
+            let newNumber = 1;
+            uniqueNumber = await db.institute_User_sequence.create({
+                data: {
+                    number: newNumber,
+                },
+            });
+        }
+
         const prefix = 'USH';
 
-        const index = `${prefix}${uniqueNumber.id}`;
+        const index = `${prefix}${uniqueNumber.number}`;
 
         const hashedPassword = await hash(password, 10);
 
         const newInstitute = await db.institutes.create({
             data: {
-                institute_initial,
                 institute_name,
                 gender,
                 institute_type,
@@ -46,15 +66,21 @@ export async function POST(req: Request) {
             },
         });
 
-        const subjects = await db.subjects.findMany();
-
-        for (const subject of subjects) {
-            const status = await db.institute_subject_status.create({
-                data: {
-                    institute_id: newInstitute.institute_id,
-                    subject_id: subject.subject_id,
-                },
+        if(institute_type === 'school'){
+            const subjects = await db.subjects.findMany({
+                where: {
+                    institute_type:'school'
+                }
             });
+    
+            for (const subject of subjects) {
+                await db.institute_subject_status.create({
+                    data: {
+                        institute_id: newInstitute.institute_id,
+                        subject_id: subject.subject_id,
+                    },
+                });
+            }
         }
 
         return NextResponse.json({ Institute: newInstitute }, { status: 201 });

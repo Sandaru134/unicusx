@@ -2,18 +2,42 @@ import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { hash } from 'bcrypt';
 
+
 export async function POST(req: Request) {
     try {
         const body = await req.json();
         const { name, password } = body;
 
-        const uniqueNumber = await db.user_sequence.create({
-            data:{}
-        });
+        let uniqueNumber
+        
+        const largestNumber = await db.unicus_User_sequence.aggregate({
+            _max:{
+                number:true
+            }
+        })
+
+        if(largestNumber._max.number){
+            let newNumber = largestNumber._max.number +1;
+
+            uniqueNumber = await db.unicus_User_sequence.create({
+                data: {
+                    number:newNumber
+                },
+            })
+    
+        }else{
+            let newNumber = 1
+            uniqueNumber = await db.unicus_User_sequence.create({
+                data: {
+                    number:newNumber
+                },
+            })
+        }
+
         const prefix = 'USX'
 
-        const username = `${prefix}${uniqueNumber.id}`;
-
+        const username = `${prefix}${uniqueNumber.number}`;
+        
         const existUserById = await db.unicus_admin.findUnique({
             where: { username: username },
         });

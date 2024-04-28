@@ -1,5 +1,5 @@
 import { fetchSubjectForTeacher } from '@/utils';
-import { Button, Select, Space, Table } from 'antd';
+import { Select, Space, Table } from 'antd';
 import Column from 'antd/es/table/Column';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
@@ -26,7 +26,6 @@ const AddSubject = () => {
 
     // update status
     const handleButtonClick = async (record: any) => {
-        console.log(record);
         try {
             const response = await axios.patch(`/api/institute-admin/subject/${record}`);
             if (response.status === 200) {
@@ -58,12 +57,12 @@ const AddSubject = () => {
 
     return (
         <div className="mx-auto">
-            <div className="h-[150px] w-full rounded-md bg-white">
+            <div className="h-[150px] w-full rounded-md shadow-lg bg-white mb-3">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <Space wrap className="pl-3">
                     <Select
                         defaultValue="Select Category"
-                        style={{ width: 355 }}
+                        style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
                             { value: 'primary', label: 'Primary' },
@@ -74,8 +73,8 @@ const AddSubject = () => {
                     />
                 </Space>
             </div>
-            <div className="mt-1 bg-white">
-                <div className="mx-auto flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white">
+            <div className="mt-1 rounded-xl bg-white shadow-lg">
+                <div className="mx-auto mb-6 pt-6 flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white">
                     <input className="form-input mr-[20px] h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                 </div>
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
@@ -89,7 +88,7 @@ const AddSubject = () => {
                                 onClick={() => handleButtonClick(record.id)}
                                 className={`items-center rounded px-4 ${record.status ? 'bg-green-200 text-green-600' : 'bg-gray-500 text-gray-200'} hover:bg-opacity-75`}
                             >
-                                {record.status ? 'Active' : 'Active'}
+                                {record.status ? 'Activated' : 'Activate'}
                             </button>
                         )}
                     />

@@ -72,7 +72,7 @@ export async function PATCH(req: Request, { params }: { params: { institute_id: 
         }
 
         const body = await req.json();
-        const { institute_initial, institute_name, gender, institute_type, type, from, to, contact_number, password } = body;
+        const { institute_name, gender, institute_type, type, from, to, contact_number, password } = body;
 
         const institute = await db.institutes.findFirst({
             where: {
@@ -88,7 +88,6 @@ export async function PATCH(req: Request, { params }: { params: { institute_id: 
                 institute_id: params.institute_id,
             },
             data: {
-                institute_initial,
                 institute_name,
                 gender,
                 institute_type,

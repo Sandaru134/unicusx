@@ -10,7 +10,6 @@ export async function GET(req: Request) {
         if (!session) {
             return new NextResponse('Unauthenticated', { status: 403 });
         }
-        console.log(session);
 
         const instituteSubjects = await db.institutes.findUnique({
             where: {

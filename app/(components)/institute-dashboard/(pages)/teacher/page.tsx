@@ -3,13 +3,17 @@ import { Dialog, Transition } from '@headlessui/react';
 import { Button, Dropdown, Menu, Select, Space, Table, Tag } from 'antd';
 import Column from 'antd/es/table/Column';
 import React, { Fragment, useEffect, useState } from 'react';
-import { BsEye, BsPencil, BsPersonCheckFill, BsPersonFill, BsThreeDotsVertical, BsXLg } from 'react-icons/bs';
+import { BsEye, BsPencil, BsThreeDotsVertical, BsXLg } from 'react-icons/bs';
 import SubjectTeacher from './components/subjectTeacher';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { fetchAllTeachers, fetchSubjectForTeacher } from '@/utils';
 import UpdateSubjectTeacher from './components/updateSubjectTeacher';
 import ViewSubjectTeacher from './components/viewSubjectTeacher';
+import StatisticsPage from '../../components/statistics';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { Option } from 'antd/es/mentions';
+import useYear from '@/utils/useYear';
 
 interface SelectedValues {
     grade: any;
@@ -29,6 +33,10 @@ const TeacherRegitrationPage = () => {
     const [grader, setGrader] = useState('');
     const [search, setSearch] = useState('');
 
+    const { data } = useYear();
+
+    const [showPassword, setShowPassword] = useState(false);
+
     const [name, setName] = useState('');
     const [gender, setGender] = useState('');
     const [nic, setNic] = useState('');
@@ -42,6 +50,7 @@ const TeacherRegitrationPage = () => {
     const [teachers, setTeachers] = useState<any>([]);
     const [recordsData, setRecordsData] = useState([]);
     const [selectedTeacher, setSelectedTeacher] = useState<any>('');
+
     const [updateFormData, setUpdateFormData] = useState<any>({
         full_name: '',
         gender: '',
@@ -58,8 +67,6 @@ const TeacherRegitrationPage = () => {
         nic: '',
         contact_number: '',
     });
-
-    console.log("selected values in parent", selectedValues);
 
     const fetchToUpdate = async (record: any) => {
         setSelectedTeacher(record);
@@ -120,33 +127,11 @@ const TeacherRegitrationPage = () => {
         setTeachers(data);
     };
 
+    const handleTogglePassword = () => {
+        setShowPassword(!showPassword);
+    };
+
     // dropdown filer and search box
-    useEffect(() => {
-        const filterData = () => {
-            return teachers.filter((item: any) => {
-                // Filter based on year
-                const yearMatch = !year || year === 'all' ? true : item.createdAt.includes(year);
-
-                // Filter based on user (subject_teacher or class_teacher)
-                const userMatch = !user || user === 'all' ? true : item[user];
-
-                // Filter based on grade
-                const gradeMatch = !grader || grader === 'all' ? true : item.class?.grade_level.toString() === grader;
-
-                // Filter based on class
-                const classMatch = !teacherClass || teacherClass === 'all' ? true : item.class?.class_name === teacherClass;
-
-                return yearMatch && userMatch && gradeMatch && classMatch;
-            });
-        };
-
-        const searchFilteredData = filterData().filter((item: any) => {
-            const searchMatch = item.full_name.toLowerCase().includes(search.toLowerCase()) || item.index.toLowerCase().includes(search.toLowerCase());
-            return searchMatch;
-        });
-
-        setRecordsData(searchFilteredData);
-    }, [teachers, year, user, grader, teacherClass, search]);
 
     const handleSearch = (value: string) => {
         setSearch(value);
@@ -164,7 +149,7 @@ const TeacherRegitrationPage = () => {
     const parsedContactNumber = parseInt(contactNumber);
     const parsedGrade = parseInt(grade);
 
-    const postData = {
+    const postData: any = {
         nic: nic,
         password: password,
         full_name: name,
@@ -179,7 +164,7 @@ const TeacherRegitrationPage = () => {
         {
             key: '0',
             label: (
-                <a type="text" className="flex flex-row items-center gap-3 w-[100px]">
+                <a type="text" className="flex w-[100px] flex-row items-center gap-3">
                     <BsEye /> View
                 </a>
             ),
@@ -188,7 +173,7 @@ const TeacherRegitrationPage = () => {
         {
             key: '1',
             label: (
-                <a type="text" className="flex flex-row items-center gap-3 w-[100px]">
+                <a type="text" className="flex w-[100px] flex-row items-center gap-3">
                     <BsPencil /> Edit
                 </a>
             ),
@@ -196,24 +181,56 @@ const TeacherRegitrationPage = () => {
         },
     ];
 
+    const clearFields = () => {
+        setYear('');
+        setUser('');
+        setGrader('');
+        setTeacherClass('');
+        setName('');
+        setNic('');
+        setPassword('');
+        setSclass('');
+        setContactNumber('');
+        setSelectedValuesFromChild([]);
+        setSelectedValues([]);
+    };
+
     // create teacher
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-        console.log('handle submit', postData);
-        try {
-            // Convert contactNumber to integer
-            const response = await axios.post('/api/institute-admin/teacher', postData, {
-                headers: { 'Content-Type': 'application/json' },
-            });
-            if (response.status === 201) {
-                setAddTeacherModal(false);
-                fetchTeachers();
-                toast.success('Successfully subject created!');
-            } else {
-                throw new Error('Failed to create!');
+
+        const requiredFields = ['nic', 'password', 'full_name', 'gender', 'subjects_teacher', 'contact_number'];
+        const allRequiredValuesExist = requiredFields.every((field) => {
+            return postData[field] !== undefined && postData[field] !== null && postData[field] !== '';
+        });
+
+        if (!allRequiredValuesExist || postData.subjects_teacher.length === 0) {
+            toast.error('Please fill in all required fields!');
+            return;
+        } else {
+            // Check if contact number has exactly 10 digits
+            const contactNumber = postData['contact_number'];
+            if (!/^\d{9}$/.test(contactNumber)) {
+                toast.error('Contact number must have exactly 10 digits!');
+                return;
             }
-        } catch (error) {
-            toast.error('Failed to create!');
+
+            try {
+                // Convert contactNumber to integer
+                const response = await axios.post('/api/institute-admin/teacher', postData, {
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (response.status === 201) {
+                    setAddTeacherModal(false);
+                    clearFields();
+                    fetchTeachers();
+                    toast.success('Successfully teacher created!');
+                } else {
+                    throw new Error('Failed to create!');
+                }
+            } catch (error) {
+                toast.error('Failed to create!');
+            }
         }
     };
 
@@ -242,57 +259,54 @@ const TeacherRegitrationPage = () => {
         }
     };
 
+    console.log(recordsData);
+
+    useEffect(() => {
+        const filterData = () => {
+            return teachers.filter((item: any) => {
+                // Filter based on year
+                const yearMatch = !year || year === 'all' ? true : item.createdAt.includes(year);
+
+                // Filter based on user (subject_teacher or class_teacher)
+                const userMatch = !user || user === 'all' ? true : item[user];
+
+                // Filter based on grade
+                const gradeMatch =
+                    !grader || grader === 'all' ? true : item.class?.grade_level.toString() === grader || item.teacher_subjects?.some((subject: { class: { grade_level: { toString: () => string; }; }; }) => subject.class.grade_level.toString() === grader);
+
+                // Filter based on class
+                const classMatch =
+                    !teacherClass || teacherClass === 'all' ? true : item.class?.class_name === teacherClass || item.teacher_subjects?.some((subject: { class: { class_name: string; }; }) => subject.class.class_name === teacherClass);
+
+                return yearMatch && userMatch && gradeMatch && classMatch;
+            });
+        };
+
+        const searchFilteredData = filterData().filter((item: any) => {
+            const searchMatch = item.full_name.toLowerCase().includes(search.toLowerCase()) || item.index.toLowerCase().includes(search.toLowerCase());
+            return searchMatch;
+        });
+
+        setRecordsData(searchFilteredData);
+    }, [teachers, year, user, grader, teacherClass, search]);
+
     return (
         <div className="mx-auto w-full">
-            <div className="flex flex-col justify-between gap-5 md:flex-row">
-                <div className="h-[110px] w-[330px] rounded-md bg-white shadow-lg">
-                    <div className="flex w-full flex-row justify-between">
-                        <h1 className="p-5 text-lg font-semibold">Total users</h1>
-                        <BsPersonFill fill="blue" className="mr-3 mt-3 size-[42px]" />
-                    </div>
-                    <h1 className="bottom-3 pl-5 align-text-bottom text-lg font-semibold">1 500</h1>
-                </div>
-                <div className="h-[110px] w-[330px] rounded-md bg-white shadow-lg">
-                    <div className="flex w-full flex-row justify-between">
-                        <h1 className="p-5 text-lg font-semibold">Principles</h1>
-                        <BsPersonCheckFill fill="green" className="mr-3 mt-3 size-[42px]" />
-                    </div>
-                    <h1 className="bottom-3 pl-5 align-text-bottom text-lg font-semibold">7</h1>
-                </div>
-                <div className="h-[110px] w-[330px] rounded-md bg-white shadow-lg">
-                    <div className="flex w-full flex-row justify-between">
-                        <h1 className="p-5 text-lg font-semibold">Teachers</h1>
-                        <BsPersonCheckFill fill="orange" className="mr-3 mt-3 size-[42px]" />
-                    </div>
-                    <h1 className="bottom-3 pl-5 align-text-bottom text-lg font-semibold">150</h1>
-                </div>
-                <div className="h-[110px] w-[330px] rounded-md bg-white shadow-lg">
-                    <div className="flex w-full flex-row justify-between">
-                        <h1 className="p-5 text-lg font-semibold">Students</h1>
-                        <BsPersonCheckFill fill="red" className="mr-3 mt-3 size-[42px]" />
-                    </div>
-                    <h1 className="bottom-3 pl-5 align-text-bottom text-lg font-semibold">1 300</h1>
-                </div>
+            <div className="py-4">
+                <StatisticsPage />
             </div>
 
             {/* search filter */}
-            <div className="mt-4 h-[150px] w-full rounded-md bg-white shadow-lg">
-                <h1 className="p-5 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
+            <div className="mb-3 mt-3 h-[150px] w-full rounded-md bg-white shadow-lg">
+                <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <Space wrap className="flex flex-row items-center justify-between pl-5 pr-5">
-                    <Select
-                        defaultValue="Year"
-                        style={{ width: 300 }}
-                        options={[
-                            { value: 'all', label: 'All' },
-                            { value: '2020', label: '2020' },
-                            { value: '2021', label: '2021' },
-                            { value: '2022', label: '2022' },
-                            { value: '2023', label: '2023' },
-                            { value: '2024', label: '2024' },
-                            { value: '2025', label: '2025' },
-                        ]}
-                        onChange={(value) => setYear(value)}
-                    />
+                    <Select defaultValue="Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
+                        {data.map((year: any, index: any) => (
+                            <Option key={year} value={year}>
+                                {year}
+                            </Option>
+                        ))}
+                    </Select>
                     <Select
                         defaultValue="User"
                         style={{ width: 300 }}
@@ -343,18 +357,18 @@ const TeacherRegitrationPage = () => {
                 </Space>
             </div>
 
-            <div className="mt-1 bg-white">
-                <div className="mx-auto flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white">
+            <div className="mt-1 rounded-xl bg-white shadow-lg">
+                <div className="mx-auto mb-6 flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white pt-6">
                     <input className="form-input mr-[20px] h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                     <button className="btn mr-5 bg-blue-600 text-white" onClick={() => setAddTeacherModal(true)}>
                         Add new teacher
                     </button>
                 </div>
                 <Table className="justify-between bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="Subject" dataIndex="full_name" key="full_name" className="justify-start self-start font-semibold" width={300} />
+                    <Column title="USER" dataIndex="full_name" key="full_name" className="justify-start self-start font-semibold" width={300} />
                     <Column title="US ID" dataIndex="index" key="index" className="justify-start self-start font-semibold" width={300} />
                     <Column
-                        title="Type"
+                        title="TYPE"
                         dataIndex="type"
                         key="type"
                         className="justify-start self-start font-semibold"
@@ -368,7 +382,7 @@ const TeacherRegitrationPage = () => {
                     />
                     <Column
                         className="flex justify-end self-end "
-                        title="Action"
+                        title="ACTION"
                         key="action"
                         render={(_, record: any) => (
                             <Dropdown
@@ -392,7 +406,6 @@ const TeacherRegitrationPage = () => {
                         )}
                     />
                 </Table>
-
                 {/* add teacher modal */}
                 <Transition appear show={AddTeacherModal} as={Fragment}>
                     <Dialog as="div" open={AddTeacherModal} onClose={() => setAddTeacherModal(true)}>
@@ -421,7 +434,14 @@ const TeacherRegitrationPage = () => {
                                     <Dialog.Panel className="panel my-8 w-[400px] max-w-lg overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark">
                                         <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                             <div className="text-lg font-bold">Add user</div>
-                                            <button type="button" onClick={() => setAddTeacherModal(false)} className="text-white-dark hover:text-dark">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setAddTeacherModal(false);
+                                                    clearFields();
+                                                }}
+                                                className="text-white-dark hover:text-dark"
+                                            >
                                                 <BsXLg />
                                             </button>
                                         </div>
@@ -438,9 +458,9 @@ const TeacherRegitrationPage = () => {
                                                         style={{ width: 355 }}
                                                         onChange={(value) => setGender(value)}
                                                         options={[
-                                                            { value: 'male', label: 'male' },
-                                                            { value: 'female', label: 'female' },
-                                                            { value: 'other', label: 'other' },
+                                                            { value: 'Male', label: 'Male' },
+                                                            { value: 'Female', label: 'Female' },
+                                                            { value: 'Other', label: 'Other' },
                                                         ]}
                                                     />
                                                 </Space>
@@ -491,6 +511,7 @@ const TeacherRegitrationPage = () => {
                                                 <label>Contact Number</label>
                                                 <div className="relative text-white-dark">
                                                     <input
+                                                        maxLength={11}
                                                         placeholder="Enter Contact Number"
                                                         type="number"
                                                         className="form-input placeholder:text-white-dark"
@@ -501,15 +522,21 @@ const TeacherRegitrationPage = () => {
                                                 <label>Password</label>
                                                 <div className="relative text-white-dark">
                                                     <input
-                                                        placeholder="Enter password"
-                                                        type="password"
-                                                        className="form-input placeholder:text-white-dark"
+                                                        name="password"
                                                         onChange={(e) => setPassword(e.target.value)}
+                                                        type={showPassword ? 'text' : 'password'}
+                                                        placeholder="Enter Password"
+                                                        className="form-input pr-10 placeholder:text-white-dark"
                                                     />
+                                                    <button type="button" className="password-toggle absolute right-2 top-1/2 -translate-y-1/2 transform" onClick={handleTogglePassword}>
+                                                        {showPassword ? <EyeIcon /> : <EyeOffIcon />}
+                                                    </button>
                                                 </div>
-                                                <button type="submit" className="w-[130px] items-center rounded-md bg-green-600 p-1 font-semibold text-white">
-                                                    Save
-                                                </button>
+                                                <div className="flex w-full items-center justify-center pt-2">
+                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                        Save
+                                                    </button>
+                                                </div>
                                             </form>
                                         </div>
                                     </Dialog.Panel>
@@ -518,7 +545,6 @@ const TeacherRegitrationPage = () => {
                         </div>
                     </Dialog>
                 </Transition>
-
                 {/* update modal */}
                 <Transition appear show={updateTeacherModal} as={Fragment}>
                     <Dialog as="div" open={updateTeacherModal} onClose={() => setUpdateTeacherModal(true)}>
@@ -572,9 +598,9 @@ const TeacherRegitrationPage = () => {
                                                         style={{ width: 355 }}
                                                         defaultValue={updateFormData.gender || ''}
                                                         options={[
-                                                            { value: 'male', label: 'male' },
-                                                            { value: 'female', label: 'female' },
-                                                            { value: 'other', label: 'other' },
+                                                            { value: 'Male', label: 'Male' },
+                                                            { value: 'Female', label: 'Female' },
+                                                            { value: 'Other', label: 'Other' },
                                                         ]}
                                                     />
                                                 </Space>
@@ -641,9 +667,11 @@ const TeacherRegitrationPage = () => {
                                                         className="form-input placeholder:text-white-dark"
                                                     />
                                                 </div>
-                                                <button type="submit" className="w-[130px] items-center rounded-md bg-green-600 p-1 font-semibold text-white">
-                                                    Save
-                                                </button>
+                                                <div className="flex w-full items-center justify-center pt-2">
+                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                        Save Change
+                                                    </button>
+                                                </div>
                                             </form>
                                         </div>
                                     </Dialog.Panel>
@@ -652,7 +680,6 @@ const TeacherRegitrationPage = () => {
                         </div>
                     </Dialog>
                 </Transition>
-
                 {/* view teacher modal */}
                 <Transition appear show={viewTeachersModal} as={Fragment}>
                     <Dialog as="div" open={viewTeachersModal} onClose={() => setViewTeachersModal(true)}>
@@ -693,7 +720,7 @@ const TeacherRegitrationPage = () => {
                                                 </div>
                                                 <label>Gender</label>
 
-                                                <input placeholder="Select Gender" readOnly className="form-input placeholder:text-white-dark" defaultValue={updateFormData.gender || ''} />
+                                                <input readOnly className="form-input placeholder:text-white-dark" defaultValue={formData.gender || ''} />
 
                                                 <label>Class Teacher</label>
 

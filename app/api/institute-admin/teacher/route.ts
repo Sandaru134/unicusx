@@ -13,20 +13,42 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        console.log(body);
         const { nic, password, full_name, gender, grade, class_name, subjects_teacher, contact_number } = body;
 
-        const uniqueNumber = await db.user_sequence.create({
-            data: {},
+        let uniqueNumber;
+
+        const largestNumber = await db.teacher_User_sequence.aggregate({
+            _max: {
+                number: true,
+            },
         });
+
+        if (largestNumber._max.number) {
+            let newNumber = largestNumber._max.number + 1;
+
+            uniqueNumber = await db.teacher_User_sequence.create({
+                data: {
+                    number: newNumber,
+                },
+            });
+        } else {
+            let newNumber = 1;
+            uniqueNumber = await db.teacher_User_sequence.create({
+                data: {
+                    number: newNumber,
+                },
+            });
+        }
+
         const prefix = 'UST';
 
-        const teacher_index = `${prefix}${uniqueNumber.id}`;
+        const teacher_index = `${prefix}${uniqueNumber.number}`;
 
         const hashedPassword = await hash(password, 10);
 
-        let newTeacher
+        let newTeacher;
 
+        //without class teacher
         if (!grade || !class_name) {
             newTeacher = await db.teachers.create({
                 data: {
@@ -40,6 +62,72 @@ export async function POST(req: Request) {
                     subject_teacher: true,
                 },
             });
+
+            for (const subject_teacher of subjects_teacher) {
+                const existSubject = await db.subjects.findUnique({
+                    where: {
+                        subject_id: subject_teacher.subject,
+                    },
+                });
+
+                if (!existSubject) {
+                    return new NextResponse('Subject does not exist', { status: 403 });
+                }
+                const existClass = await db.classes.findFirst({
+                    where: {
+                        grade_level: subject_teacher.grade,
+                        class_name: subject_teacher.class,
+                        institute_id: session.user.id,
+                    },
+                });
+
+                if (!existClass) {
+                    const newClass = await db.classes.create({
+                        data: {
+                            grade_level: subject_teacher.grade,
+                            class_name: subject_teacher.class,
+                            institute_id: session?.user.id,
+                        },
+                    });
+
+                    //create term_class for each term
+                    const terms = await db.terms.findMany({
+                        where: {
+                            institute_id: session.user.id,
+                            completed: false,
+                        },
+                    });
+
+                    for (const term of terms) {
+                        await db.term_class.create({
+                            data: {
+                                term_id: term.term_id,
+                                class_id: newClass.class_id,
+                                institute_id: session.user.id,
+                            },
+                        });
+                    }
+
+                    await db.teacher_subjects.create({
+                        data: {
+                            teacher_id: newTeacher.teacher_id,
+                            class_id: newClass.class_id,
+                            subject_id: existSubject.subject_id,
+                            medium: subject_teacher.medium,
+                        },
+                    });
+                } else {
+                    await db.teacher_subjects.createMany({
+                        data: {
+                            teacher_id: newTeacher.teacher_id,
+                            class_id: existClass.class_id,
+                            subject_id: existSubject.subject_id,
+                            medium: subject_teacher.medium,
+                        },
+                    });
+                }
+            }
+            return NextResponse.json(newTeacher, { status: 201 });
         }
 
         const classTeacher = await db.classes.findFirst({
@@ -58,7 +146,25 @@ export async function POST(req: Request) {
                     institute_id: session?.user.id,
                 },
             });
- 
+
+            //create term_class for each term
+            const terms = await db.terms.findMany({
+                where: {
+                    institute_id: session.user.id,
+                    completed: false,
+                },
+            });
+
+            for (const term of terms) {
+                await db.term_class.create({
+                    data: {
+                        term_id: term.term_id,
+                        class_id: newClass.class_id,
+                        institute_id: session.user.id,
+                    },
+                });
+            }
+
             newTeacher = await db.teachers.create({
                 data: {
                     index: teacher_index,
@@ -126,6 +232,25 @@ export async function POST(req: Request) {
                         institute_id: session?.user.id,
                     },
                 });
+
+                //create term_class for each term
+                const terms = await db.terms.findMany({
+                    where: {
+                        institute_id: session.user.id,
+                        completed: false,
+                    },
+                });
+
+                for (const term of terms) {
+                    await db.term_class.create({
+                        data: {
+                            term_id: term.term_id,
+                            class_id: newClass.class_id,
+                            institute_id: session.user.id,
+                        },
+                    });
+                }
+
                 await db.teacher_subjects.create({
                     data: {
                         teacher_id: newTeacher.teacher_id,
@@ -163,6 +288,10 @@ export async function GET(req: Request) {
         }
 
         const teachers = await db.teachers.findMany({
+            where: {
+                institute_id: session.user.id,
+                left:false
+            },
             include: {
                 class: true,
                 teacher_subjects: {

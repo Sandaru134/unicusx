@@ -12,7 +12,7 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
         }
 
         const body = await req.json();
-        console.log(body);
+
         const { nic, name, gender, grade, class_name, subjects_teacher, contactNumber } = body;
 
         let updatedTeacher;
@@ -41,6 +41,73 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
                     class_teacher: false,
                 },
             });
+
+            for (const subject_teacher of subjects_teacher) {
+                const subject = await db.subjects.findFirst({
+                    where: {
+                        subject_id: subject_teacher.subject,
+                    },
+                });
+
+                if (!subject) {
+                    return new NextResponse('Subject does not exist', { status: 403 });
+                }
+
+                const existClass = await db.classes.findFirst({
+                    where: {
+                        grade_level: subject_teacher.grade,
+                        class_name: subject_teacher.class,
+                    },
+                });
+
+                if (!existClass) {
+                    const newClass = await db.classes.create({
+                        data: {
+                            grade_level: subject_teacher.grade,
+                            class_name: subject_teacher.class,
+                            institute_id: session?.user.id,
+                        },
+                    });
+
+                    //create term_class for each term
+                    const terms = await db.terms.findMany({
+                        where: {
+                            institute_id: session.user.id,
+                            completed: false,
+                        },
+                    });
+
+                    for (const term of terms) {
+                        await db.term_class.create({
+                            data: {
+                                term_id: term.term_id,
+                                class_id: newClass.class_id,
+                                institute_id: session.user.id,
+                            },
+                        });
+                    }
+
+                    await db.teacher_subjects.create({
+                        data: {
+                            teacher_id: params.teacher_id,
+                            class_id: newClass.class_id,
+                            medium: subject_teacher.medium,
+                            subject_id: subject.subject_id,
+                        },
+                    });
+                } else {
+                    await db.teacher_subjects.create({
+                        data: {
+                            teacher_id: params.teacher_id,
+                            class_id: existClass.class_id,
+                            medium: subject_teacher.medium,
+                            subject_id: subject.subject_id,
+                        },
+                    });
+                }
+            }
+
+            return NextResponse.json(updatedTeacher, { status: 200 });
         }
 
         const classTeacher = await db.classes.findFirst({
@@ -59,6 +126,24 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
                     institute_id: session?.user.id,
                 },
             });
+
+            //create term_class for each term
+            const terms = await db.terms.findMany({
+                where: {
+                    institute_id: session.user.id,
+                    completed: false,
+                },
+            });
+
+            for (const term of terms) {
+                await db.term_class.create({
+                    data: {
+                        term_id: term.term_id,
+                        class_id: newClass.class_id,
+                        institute_id: session.user.id,
+                    },
+                });
+            }
 
             updatedTeacher = await db.teachers.update({
                 where: {
@@ -122,6 +207,24 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
                         institute_id: session?.user.id,
                     },
                 });
+
+                //create term_class for each term
+                const terms = await db.terms.findMany({
+                    where: {
+                        institute_id: session.user.id,
+                        completed: false,
+                    },
+                });
+
+                for (const term of terms) {
+                    await db.term_class.create({
+                        data: {
+                            term_id: term.term_id,
+                            class_id: newClass.class_id,
+                            institute_id: session.user.id,
+                        },
+                    });
+                }
 
                 await db.teacher_subjects.create({
                     data: {

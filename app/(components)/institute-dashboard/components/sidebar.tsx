@@ -10,10 +10,10 @@ import IconCaretsDown from '@/components/icon/icon-carets-down';
 import IconMenuDashboard from '@/components/icon/menu/icon-menu-dashboard';
 import IconCaretDown from '@/components/icon/icon-caret-down';
 import IconMinus from '@/components/icon/icon-minus';
-import { MdOutlineTransferWithinAStation } from "react-icons/md";
-import { usePathname } from 'next/navigation';
+import { MdLogout, MdOutlineTransferWithinAStation } from "react-icons/md";
+import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
-import { FaUserTie } from 'react-icons/fa';
+import { FaBook, FaCalendar, FaFileSignature, FaUserFriends, FaUserTie } from 'react-icons/fa';
 import IconHome from '@/components/icon/icon-home';
 import IconBook from '@/components/icon/icon-book';
 import IconLock from '@/components/icon/icon-lock';
@@ -21,12 +21,15 @@ import IconCalendar from '@/components/icon/icon-calendar';
 import { FaChalkboardTeacher } from 'react-icons/fa';
 import { IoPeopleOutline } from 'react-icons/io5';
 import { FaMarker } from "react-icons/fa";
+import { signOut, useSession } from 'next-auth/react';
 
 
 const Sidebar = () => {
     const dispatch = useDispatch();
     const { t } = getTranslation();
     const pathname = usePathname();
+    const router = useRouter();
+
     const [currentMenu, setCurrentMenu] = useState<string>('');
     const [errorSubMenu, setErrorSubMenu] = useState(false);
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
@@ -35,6 +38,12 @@ const Sidebar = () => {
         setCurrentMenu((oldValue) => {
             return oldValue === value ? '' : value;
         });
+    };
+
+    const handleSignOut = async () => {
+        await signOut({ redirect: false }); // Disable default redirect
+        window.localStorage.removeItem('session'); // Clear local session data
+        router.push('/login'); // Redirect to logout page
     };
 
     useEffect(() => {
@@ -69,7 +78,7 @@ const Sidebar = () => {
         }
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
         selector?.classList.add('active');
-    };
+    };    
 
     return (
         <div className={semidark ? 'dark' : ''}>
@@ -132,7 +141,7 @@ const Sidebar = () => {
                                     <li className="nav-item">
                                         <Link href="/institute-dashboard" className="group">
                                             <div className="flex items-center">
-                                                <IconBook className="shrink-0 group-hover:!text-primary" />
+                                                <FaBook className="shrink-0 group-hover:!text-primary icon" />
                                                 <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Add Subject')}</span>
                                             </div>
                                         </Link>
@@ -140,7 +149,7 @@ const Sidebar = () => {
                                     <li className="nav-item">
                                         <Link href="/institute-dashboard/term" className="group">
                                             <div className="flex items-center">
-                                                <IconCalendar className="shrink-0 group-hover:!text-primary" />
+                                                <FaCalendar className="shrink-0 group-hover:!text-primary icon" />
                                                 <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Term')}</span>
                                             </div>
                                         </Link>
@@ -148,18 +157,26 @@ const Sidebar = () => {
                                     <li className="nav-item">
                                         <Link href="/institute-dashboard/sign" className="group">
                                             <div className="flex items-center">
-                                                <FaMarker className="shrink-0 group-hover:!text-primary" />
-                                                <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Access')}</span>
+                                                <FaFileSignature className="shrink-0 group-hover:!text-primary icon" />
+                                                <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Sign')}</span>
                                             </div>
                                         </Link>
                                     </li>
                                     <li className="nav-item">
                                         <Link href="/institute-dashboard/resignation" className="group">
                                             <div className="flex items-center">
-                                                <MdOutlineTransferWithinAStation  className="shrink-0 group-hover:!text-primary" />
+                                                <MdOutlineTransferWithinAStation  className="shrink-0 group-hover:!text-primary icon" />
                                                 <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Resignation')}</span>
                                             </div>
                                         </Link>
+                                    </li>
+                                    <li className="bottom-3 fixed w-full">
+                                        <button onClick={handleSignOut} className="group">
+                                            <div className="flex items-center justify-center ml-7">
+                                                <MdLogout className="shrink-0 group-hover:!text-primary" />
+                                                <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Logout')}</span>
+                                            </div>
+                                        </button>
                                     </li>
                                     {/*   <li className="nav-item">
                                         <Link href="/apps/notes" className="group">
@@ -227,7 +244,7 @@ const Sidebar = () => {
                                 </ul>
                             </li>
 
-                            <h2 className="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-extrabold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
+                            <h2 className="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-bold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
                                 <IconMinus className="hidden h-5 w-4 flex-none" />
                                 <span>{t('registration')}</span>
                             </h2>
@@ -235,7 +252,7 @@ const Sidebar = () => {
                             <li className="nav-item">
                                 <Link href="/institute-dashboard/student" className="group">
                                     <div className="flex items-center">
-                                        <IoPeopleOutline className="shrink-0 group-hover:!text-primary" />
+                                        <FaUserFriends className="shrink-0 group-hover:!text-primary icon" />
                                         <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Student')}</span>
                                     </div>
                                 </Link>
@@ -243,7 +260,7 @@ const Sidebar = () => {
                             <li className="nav-item">
                                 <Link href="/institute-dashboard/teacher" className="group">
                                     <div className="flex items-center">
-                                        <FaChalkboardTeacher className="shrink-0 group-hover:!text-primary" />
+                                        <FaChalkboardTeacher className="shrink-0 group-hover:!text-primary icon" />
                                         <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Teacher')}</span>
                                     </div>
                                 </Link>
@@ -251,7 +268,7 @@ const Sidebar = () => {
                             <li className="nav-item">
                                 <Link href="/institute-dashboard/principle" className="group">
                                     <div className="flex items-center">
-                                        <FaUserTie className="shrink-0 group-hover:!text-primary" />
+                                        <FaUserTie className="shrink-0 group-hover:!text-primary icon" />
                                         <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Principle')}</span>
                                     </div>
                                 </Link>

@@ -18,25 +18,30 @@ export async function POST(req: Request) {
 
         const newSubject = await db.subjects.create({
             data: {
-                name:newName,
+                name: newName,
                 institute_type,
                 category,
             },
         });
 
-        const institutes = await db.institutes.findMany({
-            select: {
-                institute_id: true,
-            },
-        });
-
-        for (const institute of institutes) {
-            await db.institute_subject_status.create({
-                data: {
-                    institute_id: institute.institute_id,
-                    subject_id: newSubject.subject_id,
+        if(institute_type === 'school'){
+            const institutes = await db.institutes.findMany({
+                where: {
+                  institute_type:'school'  
+                },
+                select: {
+                    institute_id: true,
                 },
             });
+
+            for (const institute of institutes) {
+                await db.institute_subject_status.create({
+                    data: {
+                        institute_id: institute.institute_id,
+                        subject_id: newSubject.subject_id,
+                    },
+                });
+            }
         }
 
         return NextResponse.json(newSubject, { status: 201 });

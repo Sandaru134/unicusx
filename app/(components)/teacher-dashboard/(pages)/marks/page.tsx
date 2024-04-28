@@ -13,6 +13,7 @@ const MarksPages = () => {
     const [addMarksModal, setAddMarksModal] = useState<boolean>(false);
     const [id, setId] = useState('');
     const [recordsData, setRecordsData] = useState<any>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [search, setSearch] = useState('');
     const [term, setTerm] = useState<any>([]);
@@ -34,6 +35,7 @@ const MarksPages = () => {
         setTerm(data);
         setSubjects(subjects);
     };
+
     useEffect(() => {
         getData();
     }, []);
@@ -56,20 +58,14 @@ const MarksPages = () => {
         handleMarksFormChange(name, value);
     };
 
-
     // search by input box
     const handleSearch = (value: string) => {
         setSearch(value);
-        const filteredData = responseData.filter((item: any) =>
-          item.student_subject.student.full_name
-            .toLowerCase()
-            .includes(value.toLowerCase()) ||
-          item.student_subject.student.index.toLowerCase().includes(value.toLowerCase())
+        const filteredData = responseData.filter(
+            (item: any) => item.student_subject.student.full_name.toLowerCase().includes(value.toLowerCase()) || item.student_subject.student.index.toLowerCase().includes(value.toLowerCase())
         );
-        console.log('Filtered Data:', filteredData);
         setRecordsData(filteredData);
-      };
-    
+    };
 
     // For Select components
     const handleSelectChange = (name: string, value: string) => {
@@ -91,29 +87,29 @@ const MarksPages = () => {
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-        console.log('this is form data', payload);
-        try {
-            const response = await axios.post('/api/class-teacher/enter-marks/', payload);
-            if (response.status === 200) {
-                console.log('This is response', response.data);
-                setResponseData(response.data);
-            } else {
-                throw new Error('Failed to update item');
+        if (!payload.class_name || !payload.grade_level || !payload.subject || !payload.term_id) {
+            toast.error('Please select all the fields');
+        } else {
+            try {
+                const response = await axios.post('/api/class-teacher/enter-marks/', payload);
+                if (response.status === 200) {
+                    setResponseData(response.data);
+                } else {
+                    throw new Error('Failed to update item');
+                }
+            } catch (error: any) {
+                toast.error(error.message);
             }
-        } catch (error: any) {
-            toast.error(error.message);
         }
     };
 
     const handleMarksSubmit = async (e: any) => {
+        setIsSubmitting(true);
         e.preventDefault();
         const payloadMarks = {
             ...marksForm,
             mark: parseInt(marksForm.mark),
         };
-        console.log('this is form data', payload);
-        console.log(id);
-
         try {
             const response = await axios.patch(`/api/class-teacher/enter-marks/${id}`, payloadMarks);
             if (response.status === 200) {
@@ -132,15 +128,43 @@ const MarksPages = () => {
             }
         } catch (error: any) {
             toast.error(error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // absent
+    const handleAbsent = async (record: any) => {
+        setIsSubmitting(true);
+        try {
+            const response = await axios.patch(`/api/class-teacher/enter-marks/absent/${record.id}`);
+            if (response.status === 200) {
+                axios
+                    .post('/api/class-teacher/enter-marks/', payload)
+                    .then((response) => {
+                        setRecordsData(response.data);
+                        toast.success('status updated');
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+                setAddMarksModal(false);
+            } else {
+                throw new Error('Failed to update password');
+            }
+        } catch (error: any) {
+            toast.error(error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
         <div className="mx-auto w-full">
-            <div className="h-[150px] w-full rounded-md bg-white shadow-lg">
-                <h1 className="p-5 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
-                <form className="flex flex-row items-center" onSubmit={handleSubmit}>
-                    <Space wrap className="flex flex-row items-center justify-start pl-5 pr-5">
+            <div className="mb-3 h-[150px] w-full rounded-md bg-white shadow-lg">
+                <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
+                <form className="flex flex-row items-center justify-between" onSubmit={handleSubmit}>
+                    <Space wrap className="flex flex-row items-center justify-start pl-3 pr-5">
                         <Select style={{ width: 300 }} placeholder="Select Term" onChange={(value) => handleSelectChange('term_id', value)}>
                             {term
                                 .sort((a: { term_name: string }, b: { term_name: any }) => a.term_name.localeCompare(b.term_name))
@@ -213,28 +237,37 @@ const MarksPages = () => {
                         </Select>
                     </Space>
 
-                    <button type="submit" className="w-[130px] items-center rounded-md bg-blue-600 p-1 font-semibold text-white">
+                    <button type="submit" className="mr-3 w-[130px] items-center rounded-md bg-blue-600 p-1.5 font-semibold text-white">
                         Filter
                     </button>
                 </form>
             </div>
-            <div className="mx-auto mt-1 w-full bg-white">
-                <div className="mx-auto flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white">
+            <div className="mt-1 rounded-xl bg-white shadow-lg">
+                <div className="mx-auto mb-6 flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white pt-6">
                     <input className="form-input mr-[20px] h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                 </div>
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="User" dataIndex={['student_subject', 'student', 'full_name']} key="full_name" className="justify-start self-start font-semibold" width={300} />
-                    <Column title="US ID" dataIndex={['student_subject', 'student', 'index']} key="index" className="justify-start self-start font-semibold" width={300} />
-                    <Column title="MARKS" dataIndex="mark" key="mark" className="justify-start self-start font-semibold" width={300} />
+                    <Column title="USER" dataIndex={['student', 'full_name']} key="full_name" className="justify-start self-start font-semibold" width={300} />
+                    <Column title="US ID" dataIndex={['student', 'index']} key="index" className="justify-start self-start font-semibold" width={300} />
                     <Column
-                        title="Action"
+                        title="MARKS"
+                        key="mark"
+                        className="justify-start self-start font-semibold"
+                        width={300}
+                        render={(_, record: any) => <span>{record.absent ? 'Absent' : record.mark}</span>}
+                    />
+                    <Column
+                        title="ACTION"
                         dataIndex="action"
                         key="action"
                         align="end"
                         className="justify-start self-start font-semibold"
                         render={(_, record: any) => (
                             <Space size="middle">
-                                <button className="w-[80px] rounded-md bg-blue-600 p-1 text-sm text-white hover:bg-blue-700" onClick={() => handleMarks(record)}>
+                                <button disabled={isSubmitting === true} className="h-[30px] w-[80px] rounded-md bg-red-600 p-1 text-xs text-white hover:bg-red-700" onClick={() => handleAbsent(record)}>
+                                    Absent
+                                </button>
+                                <button disabled={isSubmitting === true} className="h-[30px] w-[80px] rounded-md bg-blue-600 p-1 text-xs text-white hover:bg-blue-700" onClick={() => handleMarks(record)}>
                                     Add marks
                                 </button>
                             </Space>
@@ -248,7 +281,7 @@ const MarksPages = () => {
                         <div className="fixed inset-0" />
                     </Transition.Child>
                     <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                        <div className="flex min-h-screen items-start justify-center px-4">
+                        <div className="flex min-h-screen items-center justify-center px-4">
                             <Transition.Child
                                 as={Fragment}
                                 enter="ease-out duration-300"
@@ -261,26 +294,29 @@ const MarksPages = () => {
                                 <Dialog.Panel className="panel my-8 w-[400px] max-w-lg overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark">
                                     <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                         <div className="text-lg font-bold">Add Marks</div>
-                                        <button type="button" onClick={() => setAddMarksModal(false)} className="text-white-dark hover:text-dark">
+                                        <button type="button" disabled={isSubmitting === true} onClick={() => setAddMarksModal(false)} className="text-white-dark hover:text-dark">
                                             <BsXLg />
                                         </button>
                                     </div>
                                     <div className="items-center justify-center p-5">
                                         <form className="items-center justify-center space-y-3 dark:text-white" onSubmit={handleMarksSubmit}>
                                             <label>Enter Mark</label>
-                                            <div className="relative text-white-dark">
+                                            <div className=" text-white-dark">
                                                 <input
                                                     name="mark"
                                                     required
+                                                    type='number'
                                                     defaultValue={marksForm.mark || ''}
                                                     onChange={handleInputChange}
                                                     placeholder="Enter Marks"
-                                                    className="form-input pr-10 placeholder:text-white-dark"
+                                                    className="form-input placeholder:text-white-dark"
                                                 />
                                             </div>
-                                            <button type="submit" className="w-[130px] items-center rounded-md bg-green-600 p-1 font-semibold text-white">
-                                                Save
-                                            </button>
+                                            <div className="flex w-full items-center justify-center pt-2">
+                                                <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                    Save
+                                                </button>
+                                            </div>
                                         </form>
                                     </div>
                                 </Dialog.Panel>

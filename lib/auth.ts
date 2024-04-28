@@ -10,6 +10,7 @@ export const authOption: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET,
     session: {
         strategy: 'jwt',
+        maxAge:60*60*24
     },
     pages: {
         signIn: '/login',
@@ -80,30 +81,6 @@ export const authOption: NextAuthOptions = {
                     };
                 }
 
-                if (prefix === 'USP') {
-                    const existingUser = await db.principals.findUnique({
-                        where: {
-                            index: credentials?.username,
-                        },
-                    });
-                    if (!existingUser) {
-                        return null;
-                    }
-
-                    const passwordMatch = await compare(credentials.password, existingUser.password);
-                    if (!passwordMatch) {
-                        return null;
-                    }
-
-                    return {
-                        id: existingUser.institute_id,
-                        index: existingUser.index,
-                        username: existingUser.principal_id,
-                        prefix: prefix,
-                        name: existingUser.full_name,
-                    };
-                }
-
                 if (prefix === 'UST') {
                     const existingUser = await db.teachers.findUnique({
                         where: {
@@ -139,8 +116,7 @@ export const authOption: NextAuthOptions = {
                     }
 
                     if (existingUser.nic) {
-                        const passwordMatch = await compare(credentials.password, existingUser.nic);
-                        if (passwordMatch) {
+                        if(credentials.password === existingUser.nic){
                             return {
                                 id: existingUser.institute_id,
                                 index: existingUser.index,
@@ -149,10 +125,10 @@ export const authOption: NextAuthOptions = {
                                 name: existingUser.full_name,
                             };
                         }
+                        return null;
                     }
 
-                    const passwordMatch = await compare(credentials.password, existingUser.guardian_nic);
-                    if (passwordMatch) {
+                    if (credentials.password === existingUser.guardian_nic) {
                         return {
                             id: existingUser.institute_id,
                             index: existingUser.index,

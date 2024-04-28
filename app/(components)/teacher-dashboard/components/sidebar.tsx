@@ -7,18 +7,21 @@ import AnimateHeight from 'react-animate-height';
 import { IRootState } from '@/store';
 import { useState, useEffect } from 'react';
 import IconCaretsDown from '@/components/icon/icon-carets-down';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
-import { FaUserTie } from 'react-icons/fa';
+import { FaBook, FaUserTie } from 'react-icons/fa';
 import IconHome from '@/components/icon/icon-home';
 import IconBook from '@/components/icon/icon-book';
 import IconLock from '@/components/icon/icon-lock';
 import { FaMarker } from "react-icons/fa";
 import { FaFileSignature } from "react-icons/fa";
+import { MdLogout } from 'react-icons/md';
+import { signOut } from 'next-auth/react';
 
 const Sidebar = () => {
     const dispatch = useDispatch();
     const { t } = getTranslation();
+    const router = useRouter();
     const pathname = usePathname();
     const [currentMenu, setCurrentMenu] = useState<string>('');
     const [errorSubMenu, setErrorSubMenu] = useState(false);
@@ -46,6 +49,12 @@ const Sidebar = () => {
             }
         }
     }, []);
+
+    const handleSignOut = async () => {
+        await signOut({ redirect: false }); // Disable default redirect
+        window.localStorage.removeItem('session'); // Clear local session data
+        router.push('/login'); // Redirect to logout page
+    };
 
     useEffect(() => {
         setActiveRoute();
@@ -125,15 +134,15 @@ const Sidebar = () => {
                                     <li className="nav-item">
                                         <Link href="/teacher-dashboard" className="group">
                                             <div className="flex items-center">
-                                                <IconBook className="shrink-0 group-hover:!text-primary" />
-                                                <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('+ Add Subject')}</span>
+                                                <FaBook className="shrink-0 group-hover:!text-primary icon" />
+                                                <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Add Subject')}</span>
                                             </div>
                                         </Link>
                                     </li>
                                     <li className="nav-item">
                                         <Link href="/teacher-dashboard/marks" className="group">
                                             <div className="flex items-center">
-                                                <FaMarker className="shrink-0 group-hover:!text-primary" />
+                                                <FaMarker className="shrink-0 group-hover:!text-primary icon" />
                                                 <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Marks')}</span>
                                             </div>
                                         </Link>
@@ -141,10 +150,18 @@ const Sidebar = () => {
                                     <li className="nav-item">
                                         <Link href="/teacher-dashboard/sign" className="group">
                                             <div className="flex items-center">
-                                                <FaFileSignature className="shrink-0 group-hover:!text-primary" />
+                                                <FaFileSignature className="shrink-0 group-hover:!text-primary icon" />
                                                 <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Sign')}</span>
                                             </div>
                                         </Link>
+                                    </li>
+                                    <li className="bottom-3 fixed w-full">
+                                        <button onClick={handleSignOut} className="group">
+                                            <div className="flex items-center justify-center ml-7">
+                                                <MdLogout className="shrink-0 group-hover:!text-primary" />
+                                                <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Logout')}</span>
+                                            </div>
+                                        </button>
                                     </li>
                                     {/* <li className="nav-item">
                                         <Link href="/institute-dashboard/resignation" className="group">

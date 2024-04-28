@@ -13,6 +13,7 @@ import axios from 'axios';
 import { fetchAllStudents } from '@/utils';
 import StatisticsPage from '../../components/statistics';
 import { Option } from 'antd/es/mentions';
+import useYear from '@/utils/useYear';
 
 const StudentRegistrationPage = () => {
     const [addStudentModal, setAddStudentModal] = useState<boolean>(false);
@@ -23,6 +24,8 @@ const StudentRegistrationPage = () => {
     const [gradeLevel, setGradeLevel] = useState('');
     const [className, setClassName] = useState('');
     const [search, setSearch] = useState('');
+
+    const { data } = useYear();
 
     const [selectedStudent, setSelectedStudent] = useState<any>('');
     const [recordsData, setRecordsData] = useState<any>([]);
@@ -160,8 +163,6 @@ const StudentRegistrationPage = () => {
 
     // create student
     const submitForm = async (data: z.infer<typeof FormSchema>) => {
-        console.log(data);
-
         try {
             const response = await axios.post('/api/institute-admin/student', data, {
                 headers: { 'Content-Type': 'application/json' },
@@ -228,23 +229,20 @@ const StudentRegistrationPage = () => {
 
     return (
         <div className="mx-auto w-full">
-            <StatisticsPage />
-            <div className="mt-3 h-[150px] w-full rounded-md bg-white shadow-lg">
+            <div className="py-4">
+                <StatisticsPage />
+            </div>
+
+            <div className="mb-3 mt-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <Space wrap className="gap-10 pl-3">
-                    <Select
-                        defaultValue="Select Year"
-                        style={{ width: 300 }}
-                        options={[
-                            { value: 'all', label: 'All' },
-                            { value: '2024', label: '2024' },
-                            { value: '2023', label: '2023' },
-                            { value: '2022', label: '2022' },
-                            { value: '2021', label: '2021' },
-                            { value: '2020', label: '2020' },
-                        ]}
-                        onChange={(value) => setYear(value)}
-                    />
+                    <Select defaultValue="Select Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
+                        {data.map((year: any, index) => (
+                            <Option key={year} value={year}>
+                                {year}
+                            </Option>
+                        ))}
+                    </Select>
                     <Select defaultValue="Select Grade" style={{ width: 300 }} onChange={(value) => setGradeLevel(value)}>
                         {grade.map((value, index) => (
                             <Option key={value} value={value}>
@@ -263,20 +261,21 @@ const StudentRegistrationPage = () => {
                 </Space>
             </div>
 
-            <div className="mt-1 bg-white">
-                <div className="mx-auto flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white">
+            <div className="mt-1 rounded-xl bg-white shadow-lg">
+                <div className="mx-auto mb-6 flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white pt-6">
                     <input className="form-input mr-[20px] h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                     <button className="btn mr-5 bg-blue-600 text-white" onClick={() => setAddStudentModal(true)}>
-                        + Add new student
+                        Add new student
                     </button>
                 </div>
 
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="User" dataIndex="full_name" key="full_name" className="justify-start self-start font-semibold" />
-                    <Column title="US ID" dataIndex="index" key="index" className="justify-start self-start font-semibold" />
+                    <Column title="USER" dataIndex="full_name" key="full_name" width={400} className="items-center justify-center font-semibold" />
+                    <Column title="US ID" dataIndex="index" key="index" width={400} className="items-center justify-center font-semibold" />
                     <Column
                         title="STUDENT"
                         dataIndex="student_type"
+                        width={400}
                         key="student_type"
                         className="justify-start self-start font-semibold"
                         render={(text, record: any) => (
@@ -291,7 +290,7 @@ const StudentRegistrationPage = () => {
                     <Column title="MEDIUM" dataIndex="medium" key="medium" className="justify-start self-start font-semibold" />
                     <Column
                         className="flex justify-end self-end "
-                        title="Action"
+                        title="ACTION"
                         key="action"
                         render={(_, record: any) => (
                             <Dropdown
@@ -472,9 +471,11 @@ const StudentRegistrationPage = () => {
                                                     className="form-input placeholder:text-white-dark"
                                                 />
                                                 {errors.contact_number && <span className="error text-red-500">{errors.contact_number.message}</span>}
-                                                <button type="submit" className="mt-2 w-[130px] items-center rounded-md bg-green-600 p-1 font-semibold text-white">
-                                                    Save
-                                                </button>
+                                                <div className="flex w-full items-center justify-center pt-2">
+                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                        Save
+                                                    </button>
+                                                </div>
                                             </form>
                                         </div>
                                     </Dialog.Panel>
@@ -724,9 +725,11 @@ const StudentRegistrationPage = () => {
                                                     placeholder="Enter Contact Number"
                                                     className="form-input placeholder:text-white-dark"
                                                 />
-                                                <button type="submit" className="mt-2 w-[130px] items-center rounded-md bg-green-600 p-1 font-semibold text-white">
-                                                    Save
-                                                </button>
+                                                <div className="flex w-full items-center justify-center pt-2">
+                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                        Save Change
+                                                    </button>
+                                                </div>
                                             </form>
                                         </div>
                                     </Dialog.Panel>

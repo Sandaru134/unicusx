@@ -1,5 +1,7 @@
 'use client';
+import useYear from '@/utils/useYear';
 import { Dropdown, Menu, Select, Space, Table } from 'antd';
+import { Option } from 'antd/es/mentions';
 import Column from 'antd/es/table/Column';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
@@ -8,6 +10,8 @@ import toast from 'react-hot-toast';
 const ResignationPage = () => {
     const [recordsData, setRecordsData] = useState<any>([]);
     const [responseData, setResponseData] = useState<any>([]);
+
+    const { data } = useYear();
 
     const [year, setYear] = useState('');
     const [user, setUser] = useState('');
@@ -43,9 +47,7 @@ const ResignationPage = () => {
         };
 
         const searchFilteredData = filterData().filter((item: any) => {
-            const searchMatch =
-                item.full_name.toLowerCase().includes(search.toLowerCase()) ||
-                item.index.toLowerCase().includes(search.toLowerCase()) 
+            const searchMatch = item.full_name.toLowerCase().includes(search.toLowerCase()) || item.index.toLowerCase().includes(search.toLowerCase());
             return searchMatch;
         });
 
@@ -55,8 +57,6 @@ const ResignationPage = () => {
     useEffect(() => {
         setRecordsData(responseData);
     }, [responseData]);
-
-    console.log(recordsData, responseData);
 
     const handleSearch = (value: string) => {
         setSearch(value);
@@ -85,7 +85,6 @@ const ResignationPage = () => {
     };
 
     const handleButtonClick = async (record: any) => {
-        console.log(record);
         try {
             const response = await axios.patch(`/api/institute-admin/resignation/${record}`);
             if (response.status === 200) {
@@ -107,12 +106,12 @@ const ResignationPage = () => {
             toast.error(error.message);
         }
     };
-
+    
     return (
         <div className="mx-auto w-full">
             {/* search filter */}
-            <div className="h-[150px] w-full rounded-md bg-white shadow-lg">
-                <h1 className="p-5 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
+            <div className="mb-3 h-[150px] w-full rounded-md bg-white shadow-lg">
+                <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <Space wrap className="flex flex-row items-center justify-between pl-5 pr-5">
                     <Select
                         defaultValue="User"
@@ -123,26 +122,18 @@ const ResignationPage = () => {
                             { value: 'principal', label: 'Principal' },
                         ]}
                         onChange={(value) => {
-                            console.log('Selected value:', value);
                             setUser(value);
                             handleSelectChange(value);
                         }}
                     />
 
-                    <Select
-                        defaultValue="Year"
-                        style={{ width: 300 }}
-                        options={[
-                            { value: 'all', label: 'All' },
-                            { value: '2020', label: '2020' },
-                            { value: '2021', label: '2021' },
-                            { value: '2022', label: '2022' },
-                            { value: '2023', label: '2023' },
-                            { value: '2024', label: '2024' },
-                            { value: '2025', label: '2025' },
-                        ]}
-                        onChange={(value) => setYear(value)}
-                    />
+                    <Select defaultValue="Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
+                        {data.map((year: any, index: any) => (
+                            <Option key={year} value={year}>
+                                {year}
+                            </Option>
+                        ))}
+                    </Select>
                     <Select
                         defaultValue="Grade"
                         style={{ width: 300 }}
@@ -201,26 +192,18 @@ const ResignationPage = () => {
                 </Space>
             </div>
 
-            <div className="mt-1 bg-white">
-                <div className="mx-auto flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white">
+            <div className="mt-1 rounded-xl bg-white shadow-lg">
+                <div className="mx-auto mb-6 flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white pt-6">
                     <input className="form-input mr-[20px] h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                 </div>
-                <Table className="rounded-md bg-white shadow-md md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="User" dataIndex="full_name" key="full_name" className="justify-start self-start font-semibold" align="justify" width={300} />
-                    <Column title="US ID" dataIndex="index" key="index" className="justify-start self-start font-semibold" align="justify" width={300} />
-                    <Column
-                        title="DATE OF ENTERED"
-                        dataIndex="createdAt"
-                        key="createdAt"
-                        className="justify-start self-start font-semibold"
-                        render={(createdAt) => formatDate(createdAt)}
-                        align="justify"
-                        width={300}
-                    />
+                <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
+                    <Column title="USER" dataIndex="full_name" key="full_name" className=" font-semibold" align="start" width={300} />
+                    <Column title="US ID" dataIndex="index" key="index" className=" font-semibold" width={300} />
+                    <Column title="DATE OF ENTERED" dataIndex="createdAt" key="createdAt" className="font-semibold" render={(createdAt) => formatDate(createdAt)} width={400} />
                     <Column
                         title="STATUS"
                         key="status"
-                        className="justify-start self-start font-semibold"
+                        className="font-semibold"
                         render={(record) => (
                             <button
                                 onClick={() => handleButtonClick(record.index)}
@@ -229,19 +212,16 @@ const ResignationPage = () => {
                                 {record.left ? 'left' : 'leave'}
                             </button>
                         )}
-                        align="justify"
-                        width={300}
+                        width={400}
                     />
                     <Column
                         title="Date of Resignation"
                         dataIndex="date_of_resignation"
                         key="date_of_resignation"
-                        className="justify-start self-start font-semibold"
+                        className="font-semibold"
                         render={(date) => {
-                            console.log('Date of resignation:', date);
                             return formatDateResignation(date);
                         }}
-                        align="match-parent"
                     />
                 </Table>
             </div>

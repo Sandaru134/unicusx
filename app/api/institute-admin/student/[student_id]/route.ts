@@ -1,7 +1,7 @@
-import { authOption } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { authOption } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { getServerSession } from 'next-auth';
+import { NextResponse } from 'next/server';
 
 export async function PATCH(req: Request, { params }: { params: { student_id: string } }) {
     try {
@@ -12,10 +12,10 @@ export async function PATCH(req: Request, { params }: { params: { student_id: st
         }
 
         const existStudent = await db.students.findUnique({
-            where:{
-                student_id: params.student_id
-            }
-        })
+            where: {
+                student_id: params.student_id,
+            },
+        });
 
         if (!existStudent) {
             return new NextResponse('Unautherized', { status: 403 });
@@ -58,7 +58,7 @@ export async function PATCH(req: Request, { params }: { params: { student_id: st
             },
         });
 
-        if(!studentClass){
+        if (!studentClass) {
             const newClass = await db.classes.create({
                 data: {
                     grade_level: grade,
@@ -67,9 +67,26 @@ export async function PATCH(req: Request, { params }: { params: { student_id: st
                 },
             });
 
+            const terms = await db.terms.findMany({
+                where: {
+                    institute_id: session.user.id,
+                    completed: false,
+                },
+            });
+
+            for (const term of terms) {
+                await db.term_class.create({
+                    data: {
+                        term_id: term.term_id,
+                        class_id: newClass.class_id,
+                        institute_id: session.user.id,
+                    },
+                });
+            }
+
             const updatedStudent = await db.students.update({
-                where:{
-                    student_id:params.student_id
+                where: {
+                    student_id: params.student_id,
                 },
                 data: {
                     nic,
@@ -89,8 +106,8 @@ export async function PATCH(req: Request, { params }: { params: { student_id: st
         }
 
         const updatedStudent = await db.students.update({
-            where:{
-                student_id:params.student_id
+            where: {
+                student_id: params.student_id,
             },
             data: {
                 nic,
@@ -107,11 +124,10 @@ export async function PATCH(req: Request, { params }: { params: { student_id: st
         });
 
         return NextResponse.json(updatedStudent, { status: 200 });
-
     } catch (error) {
         console.log(error);
         return new NextResponse('Internal error', { status: 500 });
-    }finally {
+    } finally {
         db.$disconnect();
     }
 }

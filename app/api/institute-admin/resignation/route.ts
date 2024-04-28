@@ -18,14 +18,15 @@ export async function POST(req: Request) {
             const students = await db.students.findMany({
                 where: {
                     institute_id: session.user.id,
-                },include:{
-                    classes:{
-                        select:{
-                            grade_level:true,
-                            class_name:true,
-                        }
-                    }
-                }
+                },
+                include: {
+                    classes: {
+                        select: {
+                            grade_level: true,
+                            class_name: true,
+                        },
+                    },
+                },
             });
 
             return NextResponse.json(students, { status: 200 });

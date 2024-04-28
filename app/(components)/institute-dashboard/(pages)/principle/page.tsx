@@ -12,6 +12,9 @@ import { Dialog, Transition } from '@headlessui/react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { fetchAllPrincipals } from '@/utils';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { Option } from 'antd/es/mentions';
+import useYear from '@/utils/useYear';
 
 const PrincipalPage = () => {
     const [addPrincipalModal, setAddPrincipalModal] = useState<boolean>(false);
@@ -21,6 +24,8 @@ const PrincipalPage = () => {
     const [year, setYear] = useState('');
     const [type, setType] = useState('');
     const [search, setSearch] = useState('');
+
+    const { data } = useYear();
 
     const [principals, setPrincipals] = useState<any>([]);
     const [selectedPrincipal, setSelectedPrincipal] = useState<any>([]);
@@ -80,7 +85,6 @@ const PrincipalPage = () => {
             grade: undefined,
             nic: '',
             contact_number: undefined,
-            password: '',
         },
     });
 
@@ -111,6 +115,7 @@ const PrincipalPage = () => {
     useEffect(() => {
         setRecordsData(principals);
     }, [principals]);
+
 
     // filter by dropdown
     useEffect(() => {
@@ -157,28 +162,38 @@ const PrincipalPage = () => {
 
     // Create Principal
     const submitForm = async (data: z.infer<typeof FormSchema>) => {
-        console.log(data);
-        try {
-            const response = await axios.post('/api/institute-admin/principal', data, {
-                headers: { 'Content-Type': 'application/json' },
-            });
-            if (response.status === 201) {
-                toast.success('Successfully Principal created!');
-                fetchPrincipals();
-                setAddPrincipalModal(false);
-                reset();
-            } else {
-                throw new Error('Failed to create!');
+        if (!data.full_name || !data.gender || !data.grade || !data.nic || !data.contact_number) {
+            toast.error('Please fill all the fields!');
+            return;
+        } else {
+            // Check if contact number has exactly 10 digits
+            const contactNumber = String(data['contact_number']); // Convert to string
+            if (!/^\d{9}$/.test(contactNumber)) {
+                toast.error('Contact number must have exactly 10 digits!');
+                return;
             }
-        } catch (error) {
-            toast.error('Failed to create!');
+
+            try {
+                const response = await axios.post('/api/institute-admin/principal', data, {
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (response.status === 201) {
+                    toast.success('Successfully Principal created!');
+                    fetchPrincipals();
+                    setAddPrincipalModal(false);
+                    reset();
+                } else {
+                    throw new Error('Failed to create!');
+                }
+            } catch (error) {
+                toast.error('Failed to create!');
+            }
         }
     };
 
     //  update principal
     const handleUpdate = async (e: any) => {
         e.preventDefault();
-        console.log(updateFormData);
         const updatedFormData = {
             ...updateFormData,
             contact_number: parseInt(updateFormData.contact_number),
@@ -203,23 +218,19 @@ const PrincipalPage = () => {
 
     return (
         <div className="mx-auto w-full">
-            <StatisticsPage />
-            <div className="mt-3 h-[150px] w-full rounded-md bg-white shadow-lg">
+            <div className="py-4">
+                <StatisticsPage />
+            </div>
+            <div className="mb-3 mt-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <Space wrap className="gap-10 pl-3">
-                    <Select
-                        defaultValue="Select Year"
-                        style={{ width: 300 }}
-                        options={[
-                            { value: 'all', label: 'All' },
-                            { value: '2024', label: '2024' },
-                            { value: '2023', label: '2023' },
-                            { value: '2022', label: '2022' },
-                            { value: '2021', label: '2021' },
-                            { value: '2020', label: '2020' },
-                        ]}
-                        onChange={(value) => setYear(value)}
-                    />
+                    <Select defaultValue="Select Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
+                        {data.map((year: any, index) => (
+                            <Option key={year} value={year}>
+                                {year}
+                            </Option>
+                        ))}
+                    </Select>
                     <Select
                         style={{ width: 355 }}
                         defaultValue="Select Type"
@@ -233,19 +244,19 @@ const PrincipalPage = () => {
                     />
                 </Space>
             </div>
-            <div className="mt-1 bg-white">
-                <div className="mx-auto flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white">
+            <div className="mt-1 rounded-xl bg-white shadow-lg">
+                <div className="mx-auto mb-6 flex h-[50px] flex-row items-center justify-end gap-8 self-end rounded-md bg-white pt-6">
                     <input className="form-input mr-[20px] h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                     <button className="btn mr-5 bg-blue-600 text-white" onClick={() => setAddPrincipalModal(true)}>
-                        + Add new student
+                        Add new principal
                     </button>
                 </div>
 
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="User" dataIndex="full_name" key="full_name" className="justify-start self-start font-semibold" width={300} />
+                    <Column title="USER" dataIndex="full_name" key="full_name" className="justify-start self-start font-semibold" width={300} />
                     <Column title="US ID" dataIndex="index" key="index" className="justify-start self-start font-semibold" width={300} />
                     <Column
-                        title="Type"
+                        title="TYPE"
                         dataIndex="student_type"
                         key="type"
                         className="justify-start self-start font-semibold"
@@ -259,7 +270,7 @@ const PrincipalPage = () => {
                     />
                     <Column
                         className="flex justify-end self-end "
-                        title="Action"
+                        title="ACTION"
                         key="action"
                         render={(_, record: any) => (
                             <Dropdown
@@ -300,7 +311,7 @@ const PrincipalPage = () => {
                             <div className="fixed inset-0" />
                         </Transition.Child>
                         <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                            <div className="flex min-h-screen items-start justify-center px-4">
+                            <div className="flex min-h-screen items-center justify-center px-4">
                                 <Transition.Child
                                     as={Fragment}
                                     enter="ease-out duration-300"
@@ -390,12 +401,11 @@ const PrincipalPage = () => {
                                                 />
                                                 {errors.contact_number && <span className="error text-red-500">{errors.contact_number.message}</span>}
 
-                                                <label>Password</label>
-                                                <input {...register('password')} placeholder="Enter Password" type="password" className="form-input placeholder:text-white-dark" />
-                                                {errors.password && <span className="error text-red-500">{errors.password.message}</span>}
-                                                <button type="submit" className="mt-2 w-[130px] items-center rounded-md bg-green-600 p-1 font-semibold text-white">
-                                                    Save
-                                                </button>
+                                                <div className="flex w-full items-center justify-center pt-2">
+                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                        Save
+                                                    </button>
+                                                </div>
                                             </form>
                                         </div>
                                     </Dialog.Panel>
@@ -420,7 +430,7 @@ const PrincipalPage = () => {
                             <div className="fixed inset-0" />
                         </Transition.Child>
                         <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                            <div className="flex min-h-screen items-start justify-center px-4">
+                            <div className="flex min-h-screen items-center justify-center px-4">
                                 <Transition.Child
                                     as={Fragment}
                                     enter="ease-out duration-300"
@@ -481,7 +491,7 @@ const PrincipalPage = () => {
                             <div className="fixed inset-0" />
                         </Transition.Child>
                         <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
-                            <div className="flex min-h-screen items-start justify-center px-4">
+                            <div className="flex min-h-screen items-center justify-center px-4">
                                 <Transition.Child
                                     as={Fragment}
                                     enter="ease-out duration-300"
@@ -574,9 +584,11 @@ const PrincipalPage = () => {
                                                     placeholder="Enter Contact Number"
                                                     className="form-input placeholder:text-white-dark"
                                                 />
-                                                <button type="submit" className="mt-2 w-[130px] items-center rounded-md bg-green-600 p-1 font-semibold text-white">
-                                                    Save Changes
-                                                </button>
+                                                <div className="flex w-full items-center justify-center pt-2">
+                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                        Save Change
+                                                    </button>
+                                                </div>
                                             </form>
                                         </div>
                                     </Dialog.Panel>

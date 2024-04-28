@@ -21,6 +21,7 @@ export async function PATCH(req: Request, { params }: { params: { status_id: str
             },
         });
 
+        //check subject already active or not
         if (status?.status === false) {
             const updatedStatus = await db.institute_subject_status.update({
                 where: {
@@ -31,6 +32,24 @@ export async function PATCH(req: Request, { params }: { params: { status_id: str
                 },
             });
 
+            const students = await db.students.findMany({
+                where: {
+                    institute_id: updatedStatus.institute_id,
+                    left:false
+                },
+            });
+
+            for (const student of students) {
+                await db.student_subjects_Status.create({
+                    data: {
+                        student_id: student.student_id,
+                        subject_id: updatedStatus.subject_id,
+                        institute_id: updatedStatus.institute_id,
+                        class_id: student.class_id,
+                    },
+                });
+            }
+
             return NextResponse.json(updatedStatus, { status: 200 });
         }
 
@@ -40,6 +59,12 @@ export async function PATCH(req: Request, { params }: { params: { status_id: str
             },
             data: {
                 status: false,
+            },
+        });
+
+        await db.student_subjects_Status.deleteMany({
+            where: {
+                subject_id: updatedStatus.subject_id,
             },
         });
 

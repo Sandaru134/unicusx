@@ -12,7 +12,7 @@ export async function PATCH(req: Request, { params }: { params: { term_id: strin
         }
 
         const body = await req.json();
-        console.log(body);
+
         const { term_name, start, end } = body;
 
         const term = await db.terms.findFirst({

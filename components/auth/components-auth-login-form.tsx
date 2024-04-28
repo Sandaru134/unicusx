@@ -1,19 +1,22 @@
 'use client';
 
 import { redirect, useRouter } from 'next/navigation';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { signIn, useSession } from 'next-auth/react';
 import toast, { Toaster } from 'react-hot-toast';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
 const FormSchema = z.object({
-    username: z.string().min(1, 'Email is required'),
+    username: z.string().min(1, 'Email is required').toUpperCase(),
     password: z.string().min(5, 'Password is required'),
 });
 
 export default function SignInForm() {
+    const [showPassword, setShowPassword] = useState(false);
+
     const router = useRouter();
     const { data: session, status } = useSession();
     console.log(session);
@@ -53,9 +56,15 @@ export default function SignInForm() {
                 router.push('/institute-dashboard');
             } else if (session?.user.prefix === 'UST') {
                 router.push('/teacher-dashboard');
+            } else if (session?.user.prefix === 'USS') {
+                router.push('/student-dashboard');
             }
         }
     }, [router, session, status]);
+
+    const handleTogglePassword = () => {
+        setShowPassword(!showPassword);
+    };
 
     return (
         <div>
@@ -63,31 +72,23 @@ export default function SignInForm() {
             <form className="space-y-5 dark:text-white" onSubmit={handleSubmit(submitForm)}>
                 <div>
                     <label htmlFor="Email">User ID</label>
-                    <div className="relative text-white-dark">
-                        <input
-                            id="Email"
-                            {...register('username')} // Use register for form field binding
-                            placeholder="Enter User ID"
-                            className="form-input placeholder:text-white-dark"
-                        />
-                        {errors.username && <span className="error text-red-500">{errors.username.message}</span>}
+                    <div className="relative text-white-dark border border-1 rounded-md border-[#3278FF]">
+                        <input id="Email" {...register('username')} placeholder="Enter User ID" className="form-input placeholder:text-white-dark" />
                     </div>
+                    {errors.username && <span className="error text-red-500">{errors.username.message}</span>}
                 </div>
                 <div>
                     <label htmlFor="Password">Password</label>
-                    <div className="relative text-white-dark">
-                        <input
-                            id="Password"
-                            type="password"
-                            {...register('password')} // Use register for form field binding
-                            placeholder="Enter Password"
-                            className="form-input placeholder:text-white-dark"
-                        />
-                        {errors.password && <span className="error text-red-500">{errors.password.message}</span>}
+                    <div className="relative text-white-dark border border-1 border-[#3278FF] rounded-md">
+                        <input id="Password" {...register('password')} type={showPassword ? 'text' : 'password'} placeholder="Enter Password" className="form-input placeholder:text-white-dark" />
+                        <button type="button" className="password-toggle absolute right-2 top-1/2 -translate-y-1/2 transform" onClick={handleTogglePassword}>
+                            {showPassword ? <EyeIcon /> : <EyeOffIcon />}
+                        </button>
                     </div>
+                    {errors.password && <span className="error text-red-500">{errors.password.message}</span>}
                 </div>
-                <button type="submit" className="btn !mt-6 w-full border-0 bg-[#3278FE] uppercase text-white shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
-                    Sign in
+                <button type="submit" className="btn !mt-6 w-full border-0 bg-[#3278FE] text-white shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+                    Login
                 </button>
             </form>
             <Toaster />

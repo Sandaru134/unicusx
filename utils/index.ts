@@ -1,7 +1,7 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-export const class_name = ['a', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+export const class_name = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 export const grade_level = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'];
 
 // institute data
@@ -200,6 +200,21 @@ export async function fetchAllSubjectsForAddMarks() {
         toast.error('Error fetching data');
     }
   }
+
+//   get all sings
+export async function fetchAllSings() {
+    try {
+        const response = await axios.get('/api/class-teacher/sign')
+        if (response.status === 200) {
+            const data = response.data;
+            return data;
+        } else {
+            throw new Error('Something went wrong');
+        }
+    } catch (error) {
+        toast.error('Error fetching data');
+    }
+}
 
 
 

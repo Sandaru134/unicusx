@@ -3,44 +3,25 @@ import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { toggleSidebar } from '@/store/themeConfigSlice';
-import AnimateHeight from 'react-animate-height';
+
 import { IRootState } from '@/store';
 import { useState, useEffect } from 'react';
 import IconCaretsDown from '@/components/icon/icon-carets-down';
-import IconMenuDashboard from '@/components/icon/menu/icon-menu-dashboard';
-import IconCaretDown from '@/components/icon/icon-caret-down';
 import IconMinus from '@/components/icon/icon-minus';
-import IconMenuChat from '@/components/icon/menu/icon-menu-chat';
-import IconMenuMailbox from '@/components/icon/menu/icon-menu-mailbox';
-import IconMenuTodo from '@/components/icon/menu/icon-menu-todo';
-import IconMenuNotes from '@/components/icon/menu/icon-menu-notes';
-import IconMenuScrumboard from '@/components/icon/menu/icon-menu-scrumboard';
-import IconMenuContacts from '@/components/icon/menu/icon-menu-contacts';
-import IconMenuInvoice from '@/components/icon/menu/icon-menu-invoice';
-import IconMenuCalendar from '@/components/icon/menu/icon-menu-calendar';
-import IconMenuComponents from '@/components/icon/menu/icon-menu-components';
-import IconMenuElements from '@/components/icon/menu/icon-menu-elements';
-import IconMenuCharts from '@/components/icon/menu/icon-menu-charts';
-import IconMenuWidgets from '@/components/icon/menu/icon-menu-widgets';
-import IconMenuFontIcons from '@/components/icon/menu/icon-menu-font-icons';
-import IconMenuDragAndDrop from '@/components/icon/menu/icon-menu-drag-and-drop';
-import IconMenuTables from '@/components/icon/menu/icon-menu-tables';
-import IconMenuDatatables from '@/components/icon/menu/icon-menu-datatables';
-import IconMenuForms from '@/components/icon/menu/icon-menu-forms';
-import IconMenuUsers from '@/components/icon/menu/icon-menu-users';
-import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
-import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication';
-import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 import IconHome from '@/components/icon/icon-home';
 import IconBook from '@/components/icon/icon-book';
 import IconLock from '@/components/icon/icon-lock';
+import { MdLogout } from 'react-icons/md';
+import { signOut } from 'next-auth/react';
+import { FaBook, FaSchool, FaUserLock } from 'react-icons/fa';
 
 const Sidebar = () => {
     const dispatch = useDispatch();
     const { t } = getTranslation();
     const pathname = usePathname();
+    const router = useRouter();
     const [currentMenu, setCurrentMenu] = useState<string>('');
     const [errorSubMenu, setErrorSubMenu] = useState(false);
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
@@ -49,6 +30,12 @@ const Sidebar = () => {
         setCurrentMenu((oldValue) => {
             return oldValue === value ? '' : value;
         });
+    };
+
+    const handleSignOut = async () => {
+        await signOut({ redirect: false }); // Disable default redirect
+        window.localStorage.removeItem('session'); // Clear local session data
+        router.push('/login'); // Redirect to logout page
     };
 
     useEffect(() => {
@@ -98,7 +85,7 @@ const Sidebar = () => {
 
                         <button
                             type="button"
-                            className="collapse-icon flex h-8 w-8 items-center rounded-full transition duration-300 hover:bg-gray-500/10 rtl:rotate-180 dark:text-white-light dark:hover:bg-dark-light/10"
+                            className="collapse-icon flex h-8 w-8 items-center rounded-full transition duration-300 hover:bg-gray-500/10 dark:text-white-light dark:hover:bg-dark-light/10 rtl:rotate-180"
                             onClick={() => dispatch(toggleSidebar())}
                         >
                             <IconCaretsDown className="m-auto rotate-90" />
@@ -146,28 +133,36 @@ const Sidebar = () => {
                                     <li className="nav-item">
                                         <Link href="/admin-dashboard" className="group">
                                             <div className="flex items-center">
-                                                <IconHome className="shrink-0 group-hover:!text-primary" />
-                                                <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Institute')}</span>
+                                                <FaSchool className="shrink-0 group-hover:!text-primary icon" />
+                                                <span className="dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Institute')}</span>
                                             </div>
                                         </Link>
                                     </li>
                                     <li className="nav-item">
                                         <Link href="/admin-dashboard/subjects" className="group">
                                             <div className="flex items-center">
-                                                <IconBook className="shrink-0 group-hover:!text-primary" />
-                                                <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Subject')}</span>
+                                                <FaBook className="shrink-0 group-hover:!text-primary icon" />
+                                                <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Subject')}</span>
                                             </div>
                                         </Link>
                                     </li>
-                                     <li className="nav-item">
+                                    <li className="nav-item">
                                         <Link href="/admin-dashboard/access" className="group">
                                             <div className="flex items-center">
-                                                <IconLock className="shrink-0 group-hover:!text-primary" />
-                                                <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Access')}</span>
+                                                <FaUserLock className="shrink-0 group-hover:!text-primary icon" />
+                                                <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Access')}</span>
                                             </div>
                                         </Link>
                                     </li>
-                                 {/*   <li className="nav-item">
+                                    <li className="fixed bottom-3 w-full">
+                                        <button onClick={handleSignOut} className="group">
+                                            <div className="ml-7 flex items-center justify-center">
+                                                <MdLogout className="shrink-0 group-hover:!text-primary" />
+                                                <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Logout')}</span>
+                                            </div>
+                                        </button>
+                                    </li>
+                                    {/*   <li className="nav-item">
                                         <Link href="/apps/notes" className="group">
                                             <div className="flex items-center">
                                                 <IconMenuNotes className="shrink-0 group-hover:!text-primary" />
@@ -562,7 +557,7 @@ const Sidebar = () => {
                                     </ul>
                                 </AnimateHeight>
                             </li> */}
-{/* 
+                            {/* 
                             <li className="menu nav-item">
                                 <button type="button" className={`${currentMenu === 'page' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('page')}>
                                     <div className="flex items-center">

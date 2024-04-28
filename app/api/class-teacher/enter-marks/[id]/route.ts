@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
     try {
         const session = await getServerSession(authOption);
 
@@ -12,11 +12,12 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         }
 
         let allMarksPresent = true;
+        let studentAllMarksPresent = true;
 
-        const body = await request.json();
+        const body = await req.json();
 
         const { mark } = body;
-
+console.log(mark)
         const updatedMarks = await db.marks.update({
             where: {
                 id: params.id,
@@ -26,17 +27,55 @@ export async function PATCH(request: Request, { params }: { params: { id: string
             },
         });
 
-        const termStatuses = await db.marks.findMany({
+        const marks = await db.marks.findMany({
             where: {
+                student_id: updatedMarks.student_id,
+                class_id: updatedMarks.class_id,
                 term_id: updatedMarks.term_id,
-            },
-        });
-        const termName = await db.terms.findUnique({
-            where: {
-                term_id: updatedMarks.term_id,
+                absent: false,
             },
         });
 
+        //check if all marks are present for student
+        if (marks) {
+            for (const mark of marks) {
+                
+                if (mark.mark === null) {
+                    studentAllMarksPresent = false;
+                    break;
+                }
+            }
+        }
+
+        //update report status if all marks are present for student
+        if (studentAllMarksPresent) {
+            const report = await db.report.findFirst({
+                where: {
+                    student_id: updatedMarks.student_id,
+                    class_id: updatedMarks.class_id,
+                    term_id: updatedMarks.term_id,
+                },
+            });
+            if (report) {
+                await db.report.update({
+                    where: {
+                        id: report.id,
+                    },
+                    data: {
+                        completed: true,
+                    },
+                });
+            }
+        }
+
+        const termStatuses = await db.marks.findMany({
+            where: {
+                term_id: updatedMarks.term_id,
+                absent: false,
+            },
+        });
+
+        //check if all marks are present for term
         for (const termStatus of termStatuses) {
             if (termStatus.mark === null) {
                 allMarksPresent = false;
@@ -44,52 +83,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
             }
         }
 
-        if (termName?.term_name === 'third') {
-            if (allMarksPresent) {
-                const teacher = await db.teachers.findUnique({
-                    where: {
-                        teacher_id: session.user.id,
-                    },
-                });
-
-                const students = await db.students.findMany({
-                    where: {
-                        institute_id: teacher?.institute_id,
-                    },
-                });
-
-                for (const student of students) {
-                    const studentClass = await db.classes.findFirst({
-                        where: {
-                            class_id: student.class_id,
-                        },
-                    });
-                    const studentGrade = studentClass?.grade_level;
-                    if (!studentGrade) {
-                        return new NextResponse('Internal error', { status: 500 });
-                    }
-                    if (studentGrade < 13) {
-                        const newStudentGrade = studentGrade + 1;
-                        const newclass = await db.classes.findFirst({
-                            where: {
-                                grade_level: newStudentGrade,
-                                class_name: studentClass.class_name,
-                            },
-                        });
-
-                        await db.students.update({
-                            where: {
-                                student_id: student.student_id,
-                            },
-                            data: {
-                                class_id: newclass?.class_id,
-                            },
-                        });
-                    }
-                }
-            }
-        }
-
+        //update term status
         if (allMarksPresent) {
             await db.terms.update({
                 where: {
@@ -99,17 +93,6 @@ export async function PATCH(request: Request, { params }: { params: { id: string
                     completed: true,
                 },
             });
-
-            await db.student_subjects_Status.updateMany({
-                where: {
-                    terms_id: updatedMarks.term_id,
-                },
-                data: {
-                    completed: true,
-                },
-            });
-
-            return NextResponse.json(updatedMarks, { status: 200 });
         }
 
         return NextResponse.json(updatedMarks, { status: 200 });
