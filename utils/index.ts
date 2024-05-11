@@ -26,7 +26,7 @@ export const handleInstituteDelete = async (recordId: any) => {
         `/api/unicus-admin/institute/${recordId}`
       );
       if (response.status === 200) {
-        toast.success("Item deleted successfully");
+        toast.success("Institute deleted successfully");
       } else {
         throw new Error("Failed to delete item");
       }

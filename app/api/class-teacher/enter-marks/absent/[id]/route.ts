@@ -24,29 +24,18 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         if (!mark) {
             return new NextResponse('Mark not found', { status: 403 });
         }
-        let updatedMarks;
+
         let allMarksPresent = true;
         let studentAllMarksPresent = true;
 
-        if (mark.absent === true) {
-            updatedMarks = await db.marks.update({
-                where: {
-                    id: params.id,
-                },
-                data: {
-                    absent: false,
-                },
-            });
-        } else {
-            updatedMarks = await db.marks.update({
-                where: {
-                    id: params.id,
-                },
-                data: {
-                    absent: true,
-                },
-            });
-        }
+        const updatedMarks = await db.marks.update({
+            where: {
+                id: params.id,
+            },
+            data: {
+                absent: true,
+            },
+        });
 
         const marks = await db.marks.findMany({
             where: {

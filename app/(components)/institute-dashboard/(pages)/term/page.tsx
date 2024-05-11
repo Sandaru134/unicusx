@@ -13,12 +13,15 @@ import toast, { Toaster } from 'react-hot-toast';
 import { fetchAllTerms } from '@/utils';
 import useYear from '@/utils/useYear';
 import { Option } from 'antd/es/mentions';
+import { set } from 'lodash';
 
 const TermPage = () => {
     const [addTermModal, setAddTermModal] = useState<boolean>(false);
     const [updateTermModal, setUpdateTermModal] = useState<boolean>(false);
     const [recordsData, setRecordsData] = useState([]);
     const { data } = useYear();
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [year, setYear] = useState('');
     const [terms, setTerms] = useState<any>([]);
@@ -41,7 +44,7 @@ const TermPage = () => {
 
     useEffect(() => {
         fetchTerms();
-    }, [terms]);
+    }, []);
 
     useEffect(() => {
         setRecordsData(terms);
@@ -80,7 +83,7 @@ const TermPage = () => {
     } = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
         defaultValues: {
-            term_name: 'Select Term',
+            term_name: '',
             start: '',
             end: '',
         },
@@ -88,11 +91,17 @@ const TermPage = () => {
 
     // create term
     const submitForm = async (data: z.infer<typeof FormSchema>) => {
+        if (!data.term_name || !data.start || !data.end) {
+            toast.error('Please fill all fields');
+            return;
+        }
+        setIsSubmitting(true);
         try {
             const response = await axios.post('/api/institute-admin/term', data, {
                 headers: { 'Content-Type': 'application/json' },
             });
             if (response.status === 201) {
+                fetchTerms();
                 setAddTermModal(false);
                 toast.success('Successfully Term created!');
                 reset();
@@ -101,6 +110,8 @@ const TermPage = () => {
             }
         } catch (error) {
             toast.error('Failed to create!');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -146,7 +157,7 @@ const TermPage = () => {
             <div className="mb-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <Space wrap className="pl-3">
-                    <Select defaultValue="Select Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
+                    <Select placeholder="Select Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
                         {data.map((year: any, index) => (
                             <Option key={year} value={year}>
                                 {year}
@@ -162,12 +173,12 @@ const TermPage = () => {
                     </button>
                 </div>
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="TERMS" dataIndex="term_name" key="term_name" className="justify-start self-start font-semibold" />
-                    <Column title="START" dataIndex="start" key="start" className="justify-start self-start font-semibold" />
-                    <Column title="END" dataIndex="end" key="end" className="justify-start self-start font-semibold" />
+                    <Column title="TERMS" dataIndex="term_name" key="term_name" className="justify-start self-start font-semibold" width={550} />
+                    <Column title="START" dataIndex="start" key="start" className="justify-start self-start font-semibold" width={550} />
+                    <Column title="END" dataIndex="end" key="end" className="justify-start self-start font-semibold" width={550} />
                     <Column
                         className="flex justify-end self-end "
-                        title="ACTION"
+                        title="ACTIONS"
                         key="action"
                         render={(_, record: any) => (
                             <Dropdown
@@ -221,7 +232,7 @@ const TermPage = () => {
                                     <Dialog.Panel className="panel my-8 w-[400px] max-w-lg overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark">
                                         <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                             <div className="text-lg font-bold">Subject</div>
-                                            <button type="button" onClick={() => setAddTermModal(false)} className="text-white-dark hover:text-dark">
+                                            <button disabled={isSubmitting} type="button" onClick={() => setAddTermModal(false)} className="text-white-dark hover:text-dark">
                                                 <BsXLg />
                                             </button>
                                         </div>
@@ -253,7 +264,11 @@ const TermPage = () => {
                                                 <input type="date" {...register('end', { required: true })} placeholder="Enter Date" className="form-input placeholder:text-white-dark" />
                                                 {errors.end && <span className="error text-red-500">{errors.end.message}</span>}
                                                 <div className="flex w-full items-center justify-center pt-2">
-                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                    <button
+                                                        disabled={isSubmitting}
+                                                        type="submit"
+                                                        className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white"
+                                                    >
                                                         Save
                                                     </button>
                                                 </div>

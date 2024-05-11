@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { term_id, grade_level, class_name, subject } = body;
+        const { term_id, grade_level, class_name, subject_id } = body;
 
         const institute_id = await db.teachers.findUnique({
             where: {
@@ -41,14 +41,13 @@ export async function POST(request: Request) {
             return NextResponse.json('record not found', { status: 403 });
         }
 
-        
-
         const marks = await db.marks.findMany({
             where: {
                 institute_id: institute_id?.institute_id,
                 term_id: term_id,
                 class_id: classId?.class_id,
-                subject_id: subject,
+                subject_id: subject_id,
+               
             },
             include: {
                 student: true,

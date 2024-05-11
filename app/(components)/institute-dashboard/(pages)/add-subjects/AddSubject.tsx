@@ -61,13 +61,13 @@ const AddSubject = () => {
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <Space wrap className="pl-3">
                     <Select
-                        defaultValue="Select Category"
+                        placeholder="Select Category"
                         style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
-                            { value: 'primary', label: 'Primary' },
-                            { value: 'secondary', label: 'Secondary' },
-                            { value: 'collegiate', label: 'Collegiate' },
+                            { value: 'Primary', label: 'Primary' },
+                            { value: 'Secondary', label: 'Secondary' },
+                            { value: 'Collegiate', label: 'Collegiate' },
                         ]}
                         onChange={(value) => setSelectedCategory(value)}
                     />
@@ -78,9 +78,9 @@ const AddSubject = () => {
                     <input className="form-input mr-[20px] h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                 </div>
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="Subject" dataIndex={['subject', 'name']} key="subject" className="justify-start self-start font-semibold" />
+                    <Column title="SUBJECT" dataIndex={['subject', 'name']} key="subject" className="justify-start self-start font-semibold" />
                     <Column
-                        title="Status"
+                        title="STATUS"
                         key="status"
                         className="justify-start self-start font-semibold"
                         render={(record) => (

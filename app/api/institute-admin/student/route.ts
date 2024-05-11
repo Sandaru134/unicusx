@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
         let student_type: string = '';
 
-        if (institute?.institute_type === 'school') {
+        if (institute?.institute_type === 'School' || institute?.institute_type === 'Piriven') {
             if (grade >= 1 && grade <= 5) {
                 student_type = 'Primary';
             }
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
             }
         }
 
-        if (institute?.institute_type === 'preschool') {
+        if (institute?.institute_type === 'Pre-School') {
             student_type = 'Kindergarten';
         }
 
@@ -82,6 +82,7 @@ export async function POST(req: Request) {
 
         const studentClass = await db.classes.findFirst({
             where: {
+                institute_id: session.user.id,
                 grade_level: grade,
                 class_name: class_name,
             },

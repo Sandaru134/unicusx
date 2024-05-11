@@ -17,6 +17,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             },
             data: {
                 class_teacher_signed: true,
+                teacher_id: session.user.id,
             },
         });
 

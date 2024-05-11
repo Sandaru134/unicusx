@@ -17,6 +17,7 @@ export async function POST(req: Request) {
         if (user === 'student') {
             const users = await db.students.findMany({
                 where: {
+                    left: false,
                     institute: {
                         institute_type: institute,
                         type: type,
@@ -29,11 +30,32 @@ export async function POST(req: Request) {
         if (user === 'teacher') {
             const users = await db.teachers.findMany({
                 where: {
+                    left: false,
                     institute: {
                         institute_type: institute,
                         type: type,
+                        
                     },
                 },
+            });
+
+            return NextResponse.json(users, { status: 200 });
+        }
+
+        if (user === 'institute') {
+            const users = await db.institute_admin.findMany({
+                where: {
+                    institutes:{
+                        institute_type: institute,
+                        type: type,
+                    }
+                },include:{
+                    institutes:{
+                        select:{
+                            institute_name:true,
+                        }
+                    }
+                }
             });
 
             return NextResponse.json(users, { status: 200 });

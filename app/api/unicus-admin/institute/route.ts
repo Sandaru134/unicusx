@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { hash } from 'bcrypt';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
+import { string } from 'zod';
 
 export async function POST(req: Request) {
     try {
@@ -40,9 +41,26 @@ export async function POST(req: Request) {
             });
         }
 
-        const prefix = 'USH';
+        let prefix;
+        let index:string = '';
 
-        const index = `${prefix}${uniqueNumber.number}`;
+        if (institute_type === 'Pre-School') {
+            prefix = 'USL';
+
+            index = `${prefix}${uniqueNumber.number}`;
+        }
+
+        if (institute_type === 'School') {
+            prefix = 'USH';
+
+            index = `${prefix}${uniqueNumber.number}`;
+        }
+
+        if (institute_type === 'Piriven') {
+            prefix = 'USN';
+
+            index = `${prefix}${uniqueNumber.number}`;
+        }
 
         const hashedPassword = await hash(password, 10);
 
@@ -66,13 +84,47 @@ export async function POST(req: Request) {
             },
         });
 
-        if(institute_type === 'school'){
+        if (institute_type === 'School') {
             const subjects = await db.subjects.findMany({
                 where: {
-                    institute_type:'school'
-                }
+                    institute_type: 'School',
+                },
             });
-    
+
+            for (const subject of subjects) {
+                await db.institute_subject_status.create({
+                    data: {
+                        institute_id: newInstitute.institute_id,
+                        subject_id: subject.subject_id,
+                    },
+                });
+            }
+        }
+
+        if (institute_type === 'Piriven') {
+            const subjects = await db.subjects.findMany({
+                where: {
+                    institute_type: 'Piriven',
+                },
+            });
+
+            for (const subject of subjects) {
+                await db.institute_subject_status.create({
+                    data: {
+                        institute_id: newInstitute.institute_id,
+                        subject_id: subject.subject_id,
+                    },
+                });
+            }
+        }
+
+        if (institute_type === 'Pre-School') {
+            const subjects = await db.subjects.findMany({
+                where: {
+                    institute_type: 'Pre-School',
+                },
+            });
+
             for (const subject of subjects) {
                 await db.institute_subject_status.create({
                     data: {

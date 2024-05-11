@@ -54,7 +54,7 @@ export const authOption: NextAuthOptions = {
                     };
                 }
 
-                if (prefix === 'USH') {
+                if (prefix === 'USH' || prefix === 'USL' || prefix === 'USN') {
                     const existingUser = await db.institute_admin.findUnique({
                         where: {
                             index: credentials?.username,
@@ -81,9 +81,10 @@ export const authOption: NextAuthOptions = {
                     };
                 }
 
-                if (prefix === 'UST') {
+                if (prefix === 'UST' || prefix === 'USB') {
                     const existingUser = await db.teachers.findUnique({
                         where: {
+                            left:false,
                             index: credentials?.username,
                         },
                     });

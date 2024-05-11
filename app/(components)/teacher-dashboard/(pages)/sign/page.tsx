@@ -12,6 +12,8 @@ import { BsXLg } from 'react-icons/bs';
 import { FaDownload } from 'react-icons/fa';
 import { IoEyeOutline } from 'react-icons/io5';
 import ReactDOM from 'react-dom';
+import useGrade from '@/utils/useGrade';
+import useClass from '@/utils/useClass';
 
 const SignPage = () => {
     const [responseData, setResponseData] = useState<any>([]);
@@ -21,6 +23,9 @@ const SignPage = () => {
     const [search, setSearch] = useState('');
     const modalContentRef = useRef<HTMLDivElement>(null);
     const [report, setReport] = useState<boolean>(false);
+
+    const { GradeData } = useGrade();
+    const { ClassData } = useClass();
 
     const [formData, setFormData] = useState({
         year: '',
@@ -143,14 +148,13 @@ const SignPage = () => {
         });
 
         return <h3 className="text-sm">{currentDate}</h3>;
-    };
-
+    };    
     return (
         <div className="mx-auto w-full">
             <div className="mb-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <form onSubmit={handleSubmit} className="flex flex-row justify-between">
-                    <Space wrap className="pl-3">
+                    <Space wrap className="pl-3 justify-between gap-12">
                         <Select placeholder="Select Year" style={{ width: 300 }} onChange={(value) => handleSelectChange('year', value)}>
                             {year.map((year: any, index: any) => (
                                 <Option key={year} value={year}>
@@ -168,23 +172,23 @@ const SignPage = () => {
                             ]}
                             onChange={(value) => handleSelectChange('term_name', value)}
                         />
-                        <Select placeholder="Select Grade" style={{ width: 300 }} onChange={(value) => handleSelectChange('grade_level', value)}>
-                            {grade_level.map((value, index) => (
-                                <Option key={value} value={value}>
-                                    {value}
+                        <Select style={{ width: 300 }} placeholder="Select Grade" onChange={(value) => handleSelectChange('grade_level', value)}>
+                            {GradeData.map((data: any, index: any) => (
+                                <Option key={data} value={data.class?.grade_level}>
+                                    {data.class?.grade_level || ""}
                                 </Option>
                             ))}
                         </Select>
 
-                        <Select placeholder="Select Class" style={{ width: 300 }} onChange={(value) => handleSelectChange('class_name', value)}>
-                            {class_name.map((value, index) => (
-                                <Option key={value} value={value}>
-                                    {value}
+                        <Select style={{ width: 300 }} placeholder="Select Class" onChange={(value) => handleSelectChange('class_name', value)}>
+                            {ClassData.map((data: any, index: any) => (
+                                <Option key={data} value={data.class?.class_name}>
+                                    {data.class?.class_name || ""}
                                 </Option>
                             ))}
                         </Select>
                     </Space>
-                    <button type="submit" className="mr-3 w-[130px] items-center rounded-md bg-blue-600 p-1 font-semibold text-white">
+                    <button type="submit" className="mr-3 w-[130px] items-center rounded-md bg-blue-600 p-2 font-semibold text-white">
                         Filter
                     </button>
                 </form>
@@ -194,7 +198,7 @@ const SignPage = () => {
                     <input className="form-input mr-[20px] h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                 </div>
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="USER" dataIndex={['student', 'full_name']} key="full_name" className="font-semibold" align="start" width={300} />
+                    <Column title="STUDENT" dataIndex={['student', 'full_name']} key="full_name" className="font-semibold" align="start" width={300} />
                     <Column title="US ID" dataIndex={['student', 'index']} key="index" className="font-semibold" width={300} />
                     <Column
                         title="REPORT"
@@ -206,7 +210,7 @@ const SignPage = () => {
                             <div>
                                 {record.completed === true && (
                                     <button disabled className="items-center rounded bg-orange-100 px-2 text-[#FD7A05]">
-                                        Complete
+                                        Completed
                                     </button>
                                 )}
                                 {record.completed === false && (
@@ -226,26 +230,26 @@ const SignPage = () => {
                             <button
                                 disabled={record.completed === false || record.class_teacher_signed === true}
                                 onClick={() => handleButtonClick(record.id)}
-                                className={`items-center rounded px-4 ${record.class_teacher_signed ? 'bg-green-200 text-[#3BA55C]' : 'bg-[#979797] text-gray-200'} hover:bg-opacity-75`}
+                                className={`items-center rounded px-4 ${record.class_teacher_signed ? 'bg-green-100 text-green-500' : 'bg-[#979797] text-stone-100'} hover:bg-opacity-75`}
                             >
                                 {record.class_teacher_signed ? 'Signed' : 'Sign'}
                             </button>
                         )}
                     />
                     <Column
-                        title="PRINCIPLE"
+                        title="PRINCIPAL"
                         width={330}
                         dataIndex="principal_signed"
                         key="principal_signed"
                         className="font-semibold"
                         render={(text, record: any) => (
-                            <button disabled className={`items-center rounded px-4 ${record.principal_signed ? 'bg-blue-200 text-blue-600' : 'bg-[#979797] text-gray-200'} hover:bg-opacity-75`}>
+                            <button disabled className={`items-center rounded px-4 ${record.principal_signed ? 'bg-blue-100 text-blue-700' : 'bg-[#979797] text-stone-100'} hover:bg-opacity-75`}>
                                 {record.principal_signed ? 'Signed' : 'Sign'}
                             </button>
                         )}
                     />
                     <Column
-                        title="ACTION"
+                        title="ACTIONS"
                         key="Action"
                         align="end"
                         className="font-semibold"
@@ -350,7 +354,7 @@ const SignPage = () => {
                                             <div className="flex flex-row justify-between gap-x-[70px]">
                                                 <div className="flex flex-col items-start justify-start mt-2">
                                                     {marks[0]?.map((mark: any, index: any) => (
-                                                        <h1 className={`mt-2 ${mark.change !== 0 ? 'mr-2' : 'mr-2'}`} key={index}>
+                                                        <h1 className={`mt-2 ${mark.change !== 0 ? 'mr-3' : 'mr-5'}`} key={index}>
                                                             {mark?.mark || '00'}
                                                         </h1>
                                                     ))}

@@ -17,11 +17,18 @@ export async function GET(req: Request) {
             }
         })
 
+        if(!institute_id){
+            return new NextResponse('teacher not found', { status: 403 });
+        }
+
         const terms = await db.terms.findMany({
             
             where: {
-                institute_id:institute_id?.institute_id,
+                institute_id:institute_id.institute_id,
                 completed:false
+            },select:{
+                term_id:true,
+                term_name:true
             }
         })
 

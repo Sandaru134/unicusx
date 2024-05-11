@@ -15,6 +15,7 @@ import { fetchAllPrincipals } from '@/utils';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import { Option } from 'antd/es/mentions';
 import useYear from '@/utils/useYear';
+import CustomButton from '@/components/button';
 
 const PrincipalPage = () => {
     const [addPrincipalModal, setAddPrincipalModal] = useState<boolean>(false);
@@ -24,6 +25,8 @@ const PrincipalPage = () => {
     const [year, setYear] = useState('');
     const [type, setType] = useState('');
     const [search, setSearch] = useState('');
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data } = useYear();
 
@@ -116,7 +119,6 @@ const PrincipalPage = () => {
         setRecordsData(principals);
     }, [principals]);
 
-
     // filter by dropdown
     useEffect(() => {
         const filterData = () => {
@@ -173,6 +175,8 @@ const PrincipalPage = () => {
                 return;
             }
 
+            setIsSubmitting(true);
+
             try {
                 const response = await axios.post('/api/institute-admin/principal', data, {
                     headers: { 'Content-Type': 'application/json' },
@@ -185,8 +189,10 @@ const PrincipalPage = () => {
                 } else {
                     throw new Error('Failed to create!');
                 }
-            } catch (error) {
-                toast.error('Failed to create!');
+            } catch (error: any) {
+                toast.error(error.response.data.message);
+            } finally {
+                setIsSubmitting(false);
             }
         }
     };
@@ -223,8 +229,8 @@ const PrincipalPage = () => {
             </div>
             <div className="mb-3 mt-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
-                <Space wrap className="gap-10 pl-3">
-                    <Select defaultValue="Select Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
+                <Space wrap className="gap-12 pl-3">
+                    <Select placeholder="Select Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
                         {data.map((year: any, index) => (
                             <Option key={year} value={year}>
                                 {year}
@@ -232,8 +238,8 @@ const PrincipalPage = () => {
                         ))}
                     </Select>
                     <Select
-                        style={{ width: 355 }}
-                        defaultValue="Select Type"
+                        style={{ width: 300 }}
+                        placeholder="Select User"
                         options={[
                             { value: 'all', label: 'All' },
                             { value: 'Principal', label: 'Principal' },
@@ -262,15 +268,15 @@ const PrincipalPage = () => {
                         className="justify-start self-start font-semibold"
                         render={(text, record: any) => (
                             <div>
-                                {record.type === 'Principal' && <Tag color="cyan">Principal</Tag>}
-                                {record.type === 'Deputy' && <Tag color="green">Deputy</Tag>}
-                                {record.type === 'Assistant' && <Tag color="orange">Assistant</Tag>}
+                                {record.type === 'Principal' && <CustomButton title="Principal" width="26" textColor="text-teal-500" color="bg-teal-100" bgColor="" />}
+                                {record.type === 'Deputy' && <CustomButton title="Deputy" width="26" textColor="text-green-600" color="bg-green-100" bgColor="" />}
+                                {record.type === 'Assistant' && <CustomButton title="Assistant" width="26" textColor="text-orange-400" color="bg-orange-100" bgColor="" />}
                             </div>
                         )}
                     />
                     <Column
                         className="flex justify-end self-end "
-                        title="ACTION"
+                        title="ACTIONS"
                         key="action"
                         render={(_, record: any) => (
                             <Dropdown
@@ -324,7 +330,7 @@ const PrincipalPage = () => {
                                     <Dialog.Panel className="panel my-8 w-[400px] max-w-lg overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark">
                                         <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                             <div className="text-lg font-bold">Add user</div>
-                                            <button type="button" onClick={() => setAddPrincipalModal(false)} className="text-white-dark hover:text-dark">
+                                            <button disabled={isSubmitting} type="button" onClick={() => setAddPrincipalModal(false)} className="text-white-dark hover:text-dark">
                                                 <BsXLg />
                                             </button>
                                         </div>
@@ -347,9 +353,9 @@ const PrincipalPage = () => {
                                                         placeholder="Gender"
                                                         {...register('gender', { required: true })}
                                                         options={[
-                                                            { value: 'male', label: 'Male' },
-                                                            { value: 'female', label: 'Female' },
-                                                            { value: 'other', label: 'Other' },
+                                                            { value: 'Male', label: 'Male' },
+                                                            { value: 'Female', label: 'Female' },
+                                                            { value: 'Other', label: 'Other' },
                                                         ]}
                                                         onChange={(value) => setValue('gender', value)}
                                                     />
@@ -402,7 +408,11 @@ const PrincipalPage = () => {
                                                 {errors.contact_number && <span className="error text-red-500">{errors.contact_number.message}</span>}
 
                                                 <div className="flex w-full items-center justify-center pt-2">
-                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                    <button
+                                                        disabled={isSubmitting}
+                                                        type="submit"
+                                                        className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white"
+                                                    >
                                                         Save
                                                     </button>
                                                 </div>
@@ -528,9 +538,9 @@ const PrincipalPage = () => {
                                                         placeholder="Gender"
                                                         defaultValue={updateFormData.gender || ''}
                                                         options={[
-                                                            { value: 'male', label: 'Male' },
-                                                            { value: 'female', label: 'Female' },
-                                                            { value: 'other', label: 'Other' },
+                                                            { value: 'Male', label: 'Male' },
+                                                            { value: 'Female', label: 'Female' },
+                                                            { value: 'Other', label: 'Other' },
                                                         ]}
                                                         onChange={(value) => handleSelectChange('gender', value)}
                                                     />

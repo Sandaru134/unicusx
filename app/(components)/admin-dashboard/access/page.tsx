@@ -16,6 +16,8 @@ const AccessPage = () => {
     const [search, setSearch] = useState('');
     const [id, setId] = useState('');
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const [editPasswordModal, setEditPasswordModal] = useState<boolean>(false);
     const [filteredData, setFilteredData] = useState<any>({
         institute: '',
@@ -65,6 +67,10 @@ const AccessPage = () => {
 
     const getFilteredData = async (e: any) => {
         e.preventDefault();
+        if (!filteredData.institute || !filteredData.user || !filteredData.type) {
+            toast.error('Please select all fields');
+            return;
+        }
         try {
             const response = await axios.post(`/api/unicus-admin/userPassword`, filteredData);
             if (response.status === 200) {
@@ -88,6 +94,7 @@ const AccessPage = () => {
     // update password
     const submitPasswordForm = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setIsSubmitting(true);
 
         if (editPassword.password !== editPassword.ConfirmPassword) {
             toast.error('Passwords do not match');
@@ -106,6 +113,8 @@ const AccessPage = () => {
             }
         } catch (error: any) {
             toast.error(error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -114,39 +123,39 @@ const AccessPage = () => {
             <div className="h-[150px] w-full items-center rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <form onSubmit={getFilteredData} className="flex flex-row justify-between">
-                    <Space wrap className="pl-3">
+                    <Space wrap className="justify-between gap-12 pl-3">
                         <Select
-                            defaultValue="Select School"
+                            placeholder="Select Institute"
                             style={{ width: 300 }}
                             options={[
-                                { value: 'preSchool', label: 'Pre-School' },
-                                { value: 'school', label: 'School' },
-                                { value: 'piriven', label: 'Piriven' },
+                                { value: 'Pre-School', label: 'Pre-School' },
+                                { value: 'School', label: 'School' },
+                                { value: 'Piriven', label: 'Piriven' },
                             ]}
                             onChange={(value) => handleSelectChange('institute', value)}
                         />
                         <Select
-                            defaultValue="User"
+                            placeholder="Type"
                             style={{ width: 300 }}
                             options={[
-                                { value: 'student', label: 'Student' },
-                                { value: 'teacher', label: 'Teacher' },
-                            ]}
-                            onChange={(value) => handleSelectChange('user', value)}
-                        />
-                        <Select
-                            defaultValue="Type"
-                            style={{ width: 300 }}
-                            options={[
-                                { value: 'government', label: 'Government' },
-                                { value: 'semi government', label: 'Semi Goverment' },
-                                { value: 'private', label: 'Private' },
-                                { value: 'international', label: 'International' },
+                                { value: 'Government', label: 'Government' },
+                                { value: 'Semi government', label: 'Semi Goverment' },
+                                { value: 'International', label: 'International' },
+                                { value: 'Private', label: 'Private' },
                             ]}
                             onChange={(value) => handleSelectChange('type', value)}
                         />
+                        <Select
+                            placeholder="User"
+                            style={{ width: 300 }}
+                            options={[
+                                { value: 'teacher', label: 'Teacher' },
+                                { value: 'institute', label: 'Institute' },
+                            ]}
+                            onChange={(value) => handleSelectChange('user', value)}
+                        />
                     </Space>
-                    <button className="text-md ml-5 mr-3 w-[150px] rounded-md bg-blue-600 p-1.5 font-semibold text-white">Filter</button>
+                    <button className="text-md ml-5 mr-3 w-[130px] rounded-md bg-blue-600 p-2 font-semibold text-white">Filter</button>
                 </form>
             </div>
             <div className="mt-3 rounded-xl bg-white shadow-lg">
@@ -154,10 +163,28 @@ const AccessPage = () => {
                     <input className="form-input h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                 </div>
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="USER" dataIndex="full_name" key="full_name" width="30%" className="justify-start self-start font-semibold" />
+                    <Column
+                        title="USER"
+                        dataIndex="full_name"
+                        key="full_name"
+                        width="30%"
+                        className="justify-start self-start font-semibold"
+                        render={(text, record: any) => (
+                            <span>
+                                {record.institutes && record.institutes.institute_name ? (
+                                    <>
+                                        <span>{record.full_name}</span>
+                                        <span>{record.institutes.institute_name}</span>
+                                    </>
+                                ) : (
+                                    <span>{record.full_name}</span>
+                                )}
+                            </span>
+                        )}
+                    />
                     <Column title="US ID" dataIndex="index" key="index" align="left" className="justify-start self-start font-semibold" />
                     <Column
-                        title="US ID"
+                        title="ACTIONS"
                         dataIndex="index"
                         key="index"
                         align="end"
@@ -171,6 +198,7 @@ const AccessPage = () => {
                         )}
                     />
                 </Table>
+
                 <form onSubmit={submitPasswordForm}>
                     <Transition appear show={editPasswordModal} as={Fragment}>
                         <Dialog as="div" open={editPasswordModal} onClose={() => setEditPasswordModal(true)}>
@@ -199,7 +227,7 @@ const AccessPage = () => {
                                         <Dialog.Panel className="panel my-8 w-[400px] max-w-lg overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark">
                                             <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                                 <div className="text-lg font-bold">Change Password</div>
-                                                <button type="button" onClick={() => setEditPasswordModal(false)} className="text-white-dark hover:text-dark">
+                                                <button type="button" disabled={isSubmitting} onClick={() => setEditPasswordModal(false)} className="text-white-dark hover:text-dark">
                                                     <BsXLg />
                                                 </button>
                                             </div>
@@ -234,7 +262,11 @@ const AccessPage = () => {
                                                     </div>
 
                                                     <div className="flex w-full items-center justify-center pt-2">
-                                                        <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                        <button
+                                                            disabled={isSubmitting}
+                                                            type="submit"
+                                                            className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white"
+                                                        >
                                                             Save
                                                         </button>
                                                     </div>

@@ -8,12 +8,12 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
         const session = await getServerSession(authOption);
 
         if (!session) {
-            return new NextResponse('Unauthenticated', { status: 403 });
+            return NextResponse.json({message:'Unauthenticated'}, { status: 403 });
         }
 
         const body = await req.json();
 
-        const { nic, name, gender, grade, class_name, subjects_teacher, contactNumber } = body;
+        const { nic, name, gender, grade, class_name, subjects_teacher, contact } = body;
 
         let updatedTeacher;
 
@@ -24,9 +24,9 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
         });
 
         if (!teacher) {
-            return new NextResponse('Unautherized', { status: 403 });
+            return NextResponse.json({message:'Unautherized'}, { status: 403 });
         }
-
+        
         if (!grade && !class_name) {
             updatedTeacher = await db.teachers.update({
                 where: {
@@ -36,11 +36,17 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
                     nic: nic,
                     full_name: name,
                     gender: gender,
-                    contact_number: contactNumber,
+                    contact_number: contact,
                     subject_teacher: true,
                     class_teacher: false,
                 },
             });
+
+            await db.teacher_subjects.deleteMany({
+                where:{
+                    teacher_id:params.teacher_id
+                }
+            })
 
             for (const subject_teacher of subjects_teacher) {
                 const subject = await db.subjects.findFirst({
@@ -48,9 +54,9 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
                         subject_id: subject_teacher.subject,
                     },
                 });
-
+                
                 if (!subject) {
-                    return new NextResponse('Subject does not exist', { status: 403 });
+                    return  NextResponse.json({message:'Subject does not exist'}, { status: 403 });
                 }
 
                 const existClass = await db.classes.findFirst({
@@ -110,6 +116,41 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
             return NextResponse.json(updatedTeacher, { status: 200 });
         }
 
+        //with class teacher
+
+        let prefix;
+        let teacher_index;
+
+        if (!teacher.class_id) {
+            let uniqueNumber;
+
+            const largestNumber = await db.teacher_User_sequence.aggregate({
+                _max: {
+                    number: true,
+                },
+            });
+
+            if (largestNumber._max.number) {
+                let newNumber = largestNumber._max.number + 1;
+
+                uniqueNumber = await db.teacher_User_sequence.create({
+                    data: {
+                        number: newNumber,
+                    },
+                });
+            } else {
+                let newNumber = 1;
+                uniqueNumber = await db.teacher_User_sequence.create({
+                    data: {
+                        number: newNumber,
+                    },
+                });
+            }
+
+            prefix = 'UST';
+            teacher_index = `${prefix}${uniqueNumber.number}`;
+        }
+
         const classTeacher = await db.classes.findFirst({
             where: {
                 grade_level: grade,
@@ -150,16 +191,34 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
                     teacher_id: params.teacher_id,
                 },
                 data: {
+                    index: teacher_index,
                     nic,
                     full_name: name,
                     gender,
-                    contact_number: contactNumber,
+                    contact_number: contact,
                     class_id: newClass.class_id,
                     subject_teacher: true,
                     class_teacher: true,
                 },
             });
+
         } else {
+            //check class teacher
+            if(teacher.class_id !== classTeacher.class_id){
+                const existClassTeacher = await db.teachers.findFirst({
+                    where: {
+                        institute_id: session.user.id,
+                        left: false,
+                        class_id: classTeacher?.class_id,
+                    },
+                });
+                
+                if (existClassTeacher) {
+                    return NextResponse.json({message:'Class teacher already exist'}, { status: 403 });
+                }
+            }
+            
+            
             updatedTeacher = await db.teachers.update({
                 where: {
                     teacher_id: params.teacher_id,
@@ -168,7 +227,7 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
                     nic,
                     full_name: name,
                     gender,
-                    contact_number: contactNumber,
+                    contact_number: contact,
                     class_id: classTeacher.class_id,
                     institute_id: session.user.id,
                 },
@@ -187,9 +246,9 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
                     subject_id: subject_teacher.subject,
                 },
             });
-
+            
             if (!subject) {
-                return new NextResponse('Subject does not exist', { status: 403 });
+                return NextResponse.json({message:'Subject does not exist'}, { status: 403 });
             }
 
             const existClass = await db.classes.findFirst({
@@ -249,7 +308,7 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
         return NextResponse.json(updatedTeacher, { status: 200 });
     } catch (error) {
         console.log(error);
-        return new NextResponse('Internal error', { status: 500 });
+        return NextResponse.json({message:'Internal error'}, { status: 500 });
     } finally {
         db.$disconnect();
     }
@@ -258,9 +317,9 @@ export async function PATCH(req: Request, { params }: { params: { teacher_id: st
 export async function GET(req: Request, { params }: { params: { teacher_id: string } }) {
     try {
         const session = await getServerSession(authOption);
-
+        
         if (!session) {
-            return new NextResponse('Unauthenticated', { status: 403 });
+            return NextResponse.json('Unauthenticated', { status: 403 });
         }
 
         const teacher = await db.teachers.findUnique({
@@ -281,7 +340,7 @@ export async function GET(req: Request, { params }: { params: { teacher_id: stri
         return NextResponse.json(teacher, { status: 200 });
     } catch (error) {
         console.log(error);
-        return new NextResponse('Internal error', { status: 500 });
+        return NextResponse.json({message:'Internal error'}, { status: 500 });
     } finally {
         db.$disconnect();
     }

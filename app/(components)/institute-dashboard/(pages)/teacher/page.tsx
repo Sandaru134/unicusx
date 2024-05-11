@@ -7,13 +7,14 @@ import { BsEye, BsPencil, BsThreeDotsVertical, BsXLg } from 'react-icons/bs';
 import SubjectTeacher from './components/subjectTeacher';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { fetchAllTeachers, fetchSubjectForTeacher } from '@/utils';
+import { class_name, fetchAllTeachers, fetchSubjectForTeacher } from '@/utils';
 import UpdateSubjectTeacher from './components/updateSubjectTeacher';
 import ViewSubjectTeacher from './components/viewSubjectTeacher';
 import StatisticsPage from '../../components/statistics';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import { Option } from 'antd/es/mentions';
 import useYear from '@/utils/useYear';
+import CustomButton from '@/components/button';
 
 interface SelectedValues {
     grade: any;
@@ -37,6 +38,8 @@ const TeacherRegitrationPage = () => {
 
     const [showPassword, setShowPassword] = useState(false);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const [name, setName] = useState('');
     const [gender, setGender] = useState('');
     const [nic, setNic] = useState('');
@@ -59,6 +62,7 @@ const TeacherRegitrationPage = () => {
         nic: '',
         contact_number: '',
     });
+
     const [formData, setFormData] = useState<any>({
         full_name: '',
         gender: '',
@@ -76,7 +80,7 @@ const TeacherRegitrationPage = () => {
             nic: record.nic,
             contact: record.contact_number,
             grade: record.class?.grade_level || '',
-            class: record.class?.class_name || '',
+            class_name: record.class?.class_name || '',
         });
         setUpdateTeacherModal(true);
     };
@@ -140,7 +144,7 @@ const TeacherRegitrationPage = () => {
     useEffect(() => {
         fetchData();
         fetchTeachers();
-    }, [teachers]);
+    }, []);
 
     useEffect(() => {
         setRecordsData(teachers);
@@ -198,7 +202,6 @@ const TeacherRegitrationPage = () => {
     // create teacher
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-
         const requiredFields = ['nic', 'password', 'full_name', 'gender', 'subjects_teacher', 'contact_number'];
         const allRequiredValuesExist = requiredFields.every((field) => {
             return postData[field] !== undefined && postData[field] !== null && postData[field] !== '';
@@ -215,6 +218,8 @@ const TeacherRegitrationPage = () => {
                 return;
             }
 
+            setIsSubmitting(true);
+
             try {
                 // Convert contactNumber to integer
                 const response = await axios.post('/api/institute-admin/teacher', postData, {
@@ -226,10 +231,12 @@ const TeacherRegitrationPage = () => {
                     fetchTeachers();
                     toast.success('Successfully teacher created!');
                 } else {
-                    throw new Error('Failed to create!');
+                    throw new Error(response.data.message);
                 }
-            } catch (error) {
-                toast.error('Failed to create!');
+            } catch (error: any) {
+                toast.error(error.response.data.message);
+            } finally {
+                setIsSubmitting(false);
             }
         }
     };
@@ -237,6 +244,7 @@ const TeacherRegitrationPage = () => {
     //  update user
     const handleUpdate = async (e: any) => {
         e.preventDefault();
+        setIsSubmitting(true);
         try {
             const payload = {
                 ...updateFormData,
@@ -250,16 +258,17 @@ const TeacherRegitrationPage = () => {
             if (response.status === 200) {
                 setUpdateTeacherModal(false);
                 fetchTeachers();
+                fetchData();
                 toast.success('Successfully updated teacher!');
             } else {
-                throw new Error('Failed to update teacher!');
+                throw new Error(response.data.message);
             }
-        } catch (error) {
-            toast.error('Failed to update teacher!');
+        } catch (error: any) {
+            toast.error(error.response.data.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
-
-    console.log(recordsData);
 
     useEffect(() => {
         const filterData = () => {
@@ -272,11 +281,16 @@ const TeacherRegitrationPage = () => {
 
                 // Filter based on grade
                 const gradeMatch =
-                    !grader || grader === 'all' ? true : item.class?.grade_level.toString() === grader || item.teacher_subjects?.some((subject: { class: { grade_level: { toString: () => string; }; }; }) => subject.class.grade_level.toString() === grader);
+                    !grader || grader === 'all'
+                        ? true
+                        : item.class?.grade_level.toString() === grader ||
+                          item.teacher_subjects?.some((subject: { class: { grade_level: { toString: () => string } } }) => subject.class.grade_level.toString() === grader);
 
                 // Filter based on class
                 const classMatch =
-                    !teacherClass || teacherClass === 'all' ? true : item.class?.class_name === teacherClass || item.teacher_subjects?.some((subject: { class: { class_name: string; }; }) => subject.class.class_name === teacherClass);
+                    !teacherClass || teacherClass === 'all'
+                        ? true
+                        : item.class?.class_name === teacherClass || item.teacher_subjects?.some((subject: { class: { class_name: string } }) => subject.class.class_name === teacherClass);
 
                 return yearMatch && userMatch && gradeMatch && classMatch;
             });
@@ -299,8 +313,8 @@ const TeacherRegitrationPage = () => {
             {/* search filter */}
             <div className="mb-3 mt-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
-                <Space wrap className="flex flex-row items-center justify-between pl-5 pr-5">
-                    <Select defaultValue="Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
+                <Space wrap className="flex flex-row items-center justify-between pl-3 pr-3">
+                    <Select placeholder="Select Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
                         {data.map((year: any, index: any) => (
                             <Option key={year} value={year}>
                                 {year}
@@ -308,7 +322,7 @@ const TeacherRegitrationPage = () => {
                         ))}
                     </Select>
                     <Select
-                        defaultValue="User"
+                        placeholder="Select User"
                         style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
@@ -318,7 +332,7 @@ const TeacherRegitrationPage = () => {
                         onChange={(value) => setUser(value)}
                     />
                     <Select
-                        defaultValue="Grade"
+                        placeholder="Select Grade"
                         style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
@@ -339,7 +353,7 @@ const TeacherRegitrationPage = () => {
                         onChange={(value) => setGrader(value)}
                     />
                     <Select
-                        defaultValue="Class"
+                        placeholder="Select Class"
                         style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
@@ -351,6 +365,24 @@ const TeacherRegitrationPage = () => {
                             { value: 'F', label: 'F' },
                             { value: 'G', label: 'G' },
                             { value: 'H', label: 'H' },
+                            { value: 'I', label: 'I' },
+                            { value: 'J', label: 'J' },
+                            { value: 'K', label: 'K' },
+                            { value: 'L', label: 'L' },
+                            { value: 'M', label: 'M' },
+                            { value: 'N', label: 'N' },
+                            { value: 'O', label: 'O' },
+                            { value: 'P', label: 'P' },
+                            { value: 'Q', label: 'Q' },
+                            { value: 'R', label: 'R' },
+                            { value: 'S', label: 'S' },
+                            { value: 'T', label: 'T' },
+                            { value: 'U', label: 'U' },
+                            { value: 'V', label: 'V' },
+                            { value: 'W', label: 'W' },
+                            { value: 'X', label: 'X' },
+                            { value: 'Y', label: 'Y' },
+                            { value: 'Z', label: 'Z' },
                         ]}
                         onChange={(value) => setTeacherClass(value)}
                     />
@@ -373,16 +405,16 @@ const TeacherRegitrationPage = () => {
                         key="type"
                         className="justify-start self-start font-semibold"
                         render={(text, record: any) => (
-                            <div>
-                                {record.class_teacher && <Tag color="pink">Class Teacher</Tag>}
-                                {record.subject_teacher && <Tag color="orange">Subject Teacher</Tag>}
+                            <div className='flex flex-row gap-2'>
+                                {record.class_teacher && <CustomButton title='Class Teacher' width='26' textColor='text-fuchsia-600' color='bg-purple-100' bgColor='' />}
+                                {record.subject_teacher && <CustomButton title='Subject Teacher' width='26' textColor='text-orange-500' color='bg-orange-100' bgColor='' />}
                             </div>
                         )}
                         width={300}
                     />
                     <Column
                         className="flex justify-end self-end "
-                        title="ACTION"
+                        title="ACTIONS"
                         key="action"
                         render={(_, record: any) => (
                             <Dropdown
@@ -435,6 +467,7 @@ const TeacherRegitrationPage = () => {
                                         <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                             <div className="text-lg font-bold">Add user</div>
                                             <button
+                                                disabled={isSubmitting}
                                                 type="button"
                                                 onClick={() => {
                                                     setAddTeacherModal(false);
@@ -497,6 +530,25 @@ const TeacherRegitrationPage = () => {
                                                             { value: 'E', label: 'E' },
                                                             { value: 'F', label: 'F' },
                                                             { value: 'G', label: 'G' },
+                                                            { value: 'H', label: 'H' },
+                                                            { value: 'I', label: 'I' },
+                                                            { value: 'J', label: 'J' },
+                                                            { value: 'K', label: 'K' },
+                                                            { value: 'L', label: 'L' },
+                                                            { value: 'M', label: 'M' },
+                                                            { value: 'N', label: 'N' },
+                                                            { value: 'O', label: 'O' },
+                                                            { value: 'P', label: 'P' },
+                                                            { value: 'Q', label: 'Q' },
+                                                            { value: 'R', label: 'R' },
+                                                            { value: 'S', label: 'S' },
+                                                            { value: 'T', label: 'T' },
+                                                            { value: 'U', label: 'U' },
+                                                            { value: 'V', label: 'V' },
+                                                            { value: 'W', label: 'W' },
+                                                            { value: 'X', label: 'X' },
+                                                            { value: 'Y', label: 'Y' },
+                                                            { value: 'Z', label: 'Z' },
                                                         ]}
                                                         onChange={(value) => setSclass(value)}
                                                     />
@@ -533,7 +585,11 @@ const TeacherRegitrationPage = () => {
                                                     </button>
                                                 </div>
                                                 <div className="flex w-full items-center justify-center pt-2">
-                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                    <button
+                                                        disabled={isSubmitting}
+                                                        type="submit"
+                                                        className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white"
+                                                    >
                                                         Save
                                                     </button>
                                                 </div>
@@ -573,7 +629,7 @@ const TeacherRegitrationPage = () => {
                                     <Dialog.Panel className="panel my-8 w-[400px] max-w-lg overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark">
                                         <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                             <div className="text-lg font-bold">Add user</div>
-                                            <button type="button" onClick={() => setUpdateTeacherModal(false)} className="text-white-dark hover:text-dark">
+                                            <button disabled={isSubmitting} type="button" onClick={() => setUpdateTeacherModal(false)} className="text-white-dark hover:text-dark">
                                                 <BsXLg />
                                             </button>
                                         </div>
@@ -627,7 +683,7 @@ const TeacherRegitrationPage = () => {
                                                         ]}
                                                     />
                                                     <Select
-                                                        defaultValue={updateFormData.class || 'Select Class'}
+                                                        defaultValue={updateFormData.class_name || 'Select Class'}
                                                         style={{ width: 355 }}
                                                         options={[
                                                             { value: 'A', label: 'A' },
@@ -637,6 +693,25 @@ const TeacherRegitrationPage = () => {
                                                             { value: 'E', label: 'E' },
                                                             { value: 'F', label: 'F' },
                                                             { value: 'G', label: 'G' },
+                                                            { value: 'H', label: 'H' },
+                                                            { value: 'I', label: 'I' },
+                                                            { value: 'J', label: 'J' },
+                                                            { value: 'K', label: 'K' },
+                                                            { value: 'L', label: 'L' },
+                                                            { value: 'M', label: 'M' },
+                                                            { value: 'N', label: 'N' },
+                                                            { value: 'O', label: 'O' },
+                                                            { value: 'P', label: 'P' },
+                                                            { value: 'Q', label: 'Q' },
+                                                            { value: 'R', label: 'R' },
+                                                            { value: 'S', label: 'S' },
+                                                            { value: 'T', label: 'T' },
+                                                            { value: 'U', label: 'U' },
+                                                            { value: 'V', label: 'V' },
+                                                            { value: 'W', label: 'W' },
+                                                            { value: 'X', label: 'X' },
+                                                            { value: 'Y', label: 'Y' },
+                                                            { value: 'Z', label: 'Z' },
                                                         ]}
                                                         onChange={(value) => handleSelectChange('class_name', value)}
                                                     />
@@ -668,7 +743,11 @@ const TeacherRegitrationPage = () => {
                                                     />
                                                 </div>
                                                 <div className="flex w-full items-center justify-center pt-2">
-                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                    <button
+                                                        disabled={isSubmitting}
+                                                        type="submit"
+                                                        className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white"
+                                                    >
                                                         Save Change
                                                     </button>
                                                 </div>

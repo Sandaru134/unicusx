@@ -1,5 +1,6 @@
 import { authOption } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { message } from 'antd';
 import { hash } from 'bcrypt';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
@@ -13,6 +14,19 @@ export async function POST(req: Request) {
         }
         const body = await req.json();
         const { nic, full_name, gender, type, grade, contact_number } = body;
+
+        if(type === 'Principal'){
+            const existPrincipal = await db.principals.findFirst({
+                where:{
+                    institute_id:session.user.id,
+                    type: 'Principal',
+                }
+            })
+
+            if(existPrincipal){
+                return NextResponse.json({message:'Principal already exists'}, { status: 400 });
+            }
+        }
 
         let uniqueNumber;
 

@@ -12,14 +12,17 @@ export async function GET(req: Request) {
         }
 
         const instituteStudents = await db.students.aggregate({
+            where:{left:false},
             _count: true,
         });
 
         const instituteTeachers = await db.teachers.aggregate({
+            where:{left:false},
             _count: true,
         });
 
         const institutePrincipal = await db.principals.aggregate({
+            where:{left:false},
             _count: true,
         });
 

@@ -1,6 +1,4 @@
 import { fetchActiveSubject } from '@/utils';
-import { Select, Space } from 'antd';
-import { Option } from 'antd/es/mentions';
 import { useEffect, useState } from 'react';
 
 interface UpdateSubjectTeacherProps {

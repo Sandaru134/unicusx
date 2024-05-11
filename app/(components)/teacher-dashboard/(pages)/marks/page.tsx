@@ -1,5 +1,6 @@
 'use client';
 import { fetchAllSubjectsForAddMarks, fetchAllTermsForTeacher } from '@/utils';
+import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Dialog, Transition } from '@headlessui/react';
 import { Select, Space, Table } from 'antd';
 import { Option } from 'antd/es/mentions';
@@ -8,12 +9,17 @@ import axios from 'axios';
 import React, { Fragment, useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { BsXLg } from 'react-icons/bs';
+import { Button, Modal } from 'antd';
 
 const MarksPages = () => {
     const [addMarksModal, setAddMarksModal] = useState<boolean>(false);
     const [id, setId] = useState('');
     const [recordsData, setRecordsData] = useState<any>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [ClassData, setClassData] = useState<any[]>([]);
+    const [GradeData, setGradeData] = useState<any[]>([]);
+    const [subjectData, setSubjectData] = useState<any>([]);
 
     const [search, setSearch] = useState('');
     const [term, setTerm] = useState<any>([]);
@@ -26,8 +32,10 @@ const MarksPages = () => {
         term_id: '',
         grade_level: '',
         class_name: '',
-        subject: '',
+        subject_id: '',
     });
+
+    const { confirm } = Modal;
 
     const getData = async () => {
         const data = await fetchAllTermsForTeacher();
@@ -38,6 +46,9 @@ const MarksPages = () => {
 
     useEffect(() => {
         getData();
+        fetchData();
+        fetchGradeData();
+        fetchSubjectData();
     }, []);
 
     useEffect(() => {
@@ -50,6 +61,20 @@ const MarksPages = () => {
 
     const handleMarksFormChange = (name: any, value: any) => {
         setMarksForm({ ...marksForm, [name]: value });
+    };
+
+    const showConfirm = (record: any) => {
+        confirm({
+            title: 'Do you want to mark as absent?',
+            centered: true,
+            icon: <ExclamationCircleFilled />,
+            onOk() {
+                handleAbsent(record);
+            },
+            onCancel() {
+                console.log('Cancel');
+            },
+        });
     };
 
     // for input fields
@@ -87,7 +112,7 @@ const MarksPages = () => {
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-        if (!payload.class_name || !payload.grade_level || !payload.subject || !payload.term_id) {
+        if (!payload.class_name || !payload.grade_level || !payload.subject_id || !payload.term_id) {
             toast.error('Please select all the fields');
         } else {
             try {
@@ -159,12 +184,39 @@ const MarksPages = () => {
         }
     };
 
+    const fetchData = async () => {
+        try {
+            const response = await axios.get('/api/subject-teacher/dropdowns/class-name');
+            setClassData(response.data);
+        } catch (error) {
+            toast.error('Something went wrong');
+        }
+    };
+
+    const fetchGradeData = async () => {
+        try {
+            const response = await axios.get('/api/subject-teacher/dropdowns/grade');
+            setGradeData(response.data);
+        } catch (error) {
+            toast.error('Something went wrong');
+        }
+    };
+
+    const fetchSubjectData = async () => {
+        try {
+            const response = await axios.get('/api/subject-teacher/dropdowns/subjects');
+            setSubjectData(response.data);
+        } catch (error) {
+            toast.error('Something went wrong');
+        }
+    };
+    
     return (
         <div className="mx-auto w-full">
             <div className="mb-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <form className="flex flex-row items-center justify-between" onSubmit={handleSubmit}>
-                    <Space wrap className="flex flex-row items-center justify-start pl-3 pr-5">
+                    <Space wrap className="flex flex-row items-center justify-between gap-12 pl-3 pr-5">
                         <Select style={{ width: 300 }} placeholder="Select Term" onChange={(value) => handleSelectChange('term_id', value)}>
                             {term
                                 .sort((a: { term_name: string }, b: { term_name: any }) => a.term_name.localeCompare(b.term_name))
@@ -175,71 +227,34 @@ const MarksPages = () => {
                                 ))}
                         </Select>
 
-                        <Select
-                            style={{ width: 300 }}
-                            placeholder="Select Grade"
-                            onChange={(value) => handleSelectChange('grade_level', value)}
-                            options={[
-                                { value: '1', label: '1' },
-                                { value: '2', label: '2' },
-                                { value: '3', label: '3' },
-                                { value: '4', label: '4' },
-                                { value: '5', label: '5' },
-                                { value: '6', label: '6' },
-                                { value: '7', label: '7' },
-                                { value: '8', label: '8' },
-                                { value: '9', label: '9' },
-                                { value: '10', label: '10' },
-                                { value: '11', label: '11' },
-                                { value: '12', label: '12' },
-                                { value: '13', label: '13' },
-                            ]}
-                        />
-                        <Select
-                            style={{ width: 300 }}
-                            placeholder="Select Class"
-                            onChange={(value) => handleSelectChange('class_name', value)}
-                            options={[
-                                { value: 'A', label: 'A' },
-                                { value: 'B', label: 'B' },
-                                { value: 'C', label: 'C' },
-                                { value: 'D', label: 'D' },
-                                { value: 'E', label: 'E' },
-                                { value: 'F', label: 'F' },
-                                { value: 'G', label: 'G' },
-                                { value: 'H', label: 'H' },
-                                { value: 'I', label: 'I' },
-                                { value: 'J', label: 'J' },
-                                { value: 'K', label: 'K' },
-                                { value: 'L', label: 'L' },
-                                { value: 'M', label: 'M' },
-                                { value: 'N', label: 'N' },
-                                { value: 'O', label: 'O' },
-                                { value: 'P', label: 'P' },
-                                { value: 'Q', label: 'Q' },
-                                { value: 'R', label: 'R' },
-                                { value: 'S', label: 'S' },
-                                { value: 'T', label: 'T' },
-                                { value: 'U', label: 'U' },
-                                { value: 'V', label: 'V' },
-                                { value: 'W', label: 'W' },
-                                { value: 'X', label: 'X' },
-                                { value: 'Y', label: 'Y' },
-                                { value: 'Z', label: 'Z' },
-                            ]}
-                        />
-                        <Select placeholder="Select Subject" style={{ width: 300 }} onChange={(value) => handleSelectChange('subject', value)}>
-                            {subjects.map((data: any, index: any) => (
-                                <Option key={data.id} value={data.subject_id}>
-                                    {data.subject?.name}
+                        <Select style={{ width: 300 }} placeholder="Select Grade" onChange={(value) => handleSelectChange('grade_level', value)}>
+                            {GradeData.map((data: any, index: any) => (
+                                <Option key={data} value={data.class?.grade_level}>
+                                    {data.class?.grade_level || ''}
+                                </Option>
+                            ))}
+                        </Select>
+                        <Select style={{ width: 300 }} placeholder="Select Class" onChange={(value) => handleSelectChange('class_name', value)}>
+                            {ClassData.map((data: any, index: any) => (
+                                <Option key={data} value={data.class?.class_name}>
+                                    {data.class?.class_name || ''}
+                                </Option>
+                            ))}
+                        </Select>
+                        <Select placeholder="Select Subject" style={{ width: 300 }} onChange={(value) => handleSelectChange('subject_id', value)}>
+                            {subjectData.map((data: any, index: any) => (
+                                <Option key={data.id} value={data.subject?.subject_id}>
+                                    {data.subject?.name || ""}
                                 </Option>
                             ))}
                         </Select>
                     </Space>
 
-                    <button type="submit" className="mr-3 w-[130px] items-center rounded-md bg-blue-600 p-1.5 font-semibold text-white">
-                        Filter
-                    </button>
+                    <div className="items-center">
+                        <button type="submit" className="mr-3 w-[130px] items-center rounded-md bg-blue-600 p-2 font-semibold text-white">
+                            Filter
+                        </button>
+                    </div>
                 </form>
             </div>
             <div className="mt-1 rounded-xl bg-white shadow-lg">
@@ -247,27 +262,36 @@ const MarksPages = () => {
                     <input className="form-input mr-[20px] h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} />
                 </div>
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="USER" dataIndex={['student', 'full_name']} key="full_name" className="justify-start self-start font-semibold" width={300} />
-                    <Column title="US ID" dataIndex={['student', 'index']} key="index" className="justify-start self-start font-semibold" width={300} />
+                    <Column title="STUDENT" dataIndex={['student', 'full_name']} key="full_name" className="justify-start self-start font-semibold" width={530} />
+                    <Column title="US ID" dataIndex={['student', 'index']} key="index" className="justify-start self-start font-semibold" width={530} />
                     <Column
                         title="MARKS"
                         key="mark"
-                        className="justify-start self-start font-semibold"
-                        width={300}
+                        align='left'
+                        width={530}
                         render={(_, record: any) => <span>{record.absent ? 'Absent' : record.mark}</span>}
                     />
                     <Column
-                        title="ACTION"
+                        title="ACTIONS"
                         dataIndex="action"
                         key="action"
-                        align="end"
+                        align="left"
                         className="justify-start self-start font-semibold"
                         render={(_, record: any) => (
                             <Space size="middle">
-                                <button disabled={isSubmitting === true} className="h-[30px] w-[80px] rounded-md bg-red-600 p-1 text-xs text-white hover:bg-red-700" onClick={() => handleAbsent(record)}>
+                                <button
+                                    disabled={isSubmitting === true && record.mark !== null}
+                                    className={`h-[30px] w-[80px] rounded-md p-1 text-xs text-white ${record.absent ? 'bg-gray-500' : 'bg-red-600 hover:bg-red-700'}`}
+                                    // onClick={() => handleAbsent(record)}
+                                    onClick={() => showConfirm(record)}
+                                >
                                     Absent
                                 </button>
-                                <button disabled={isSubmitting === true} className="h-[30px] w-[80px] rounded-md bg-blue-600 p-1 text-xs text-white hover:bg-blue-700" onClick={() => handleMarks(record)}>
+                                <button
+                                    disabled={isSubmitting === true}
+                                    className={`h-[30px] w-[80px] rounded-md p-1 text-xs text-white ${record.mark === null ? 'bg-[#3278FF] hover:bg-blue-600' : 'bg-[#979797]'}`}
+                                    onClick={() => handleMarks(record)}
+                                >
                                     Add marks
                                 </button>
                             </Space>
@@ -305,7 +329,7 @@ const MarksPages = () => {
                                                 <input
                                                     name="mark"
                                                     required
-                                                    type='number'
+                                                    type="number"
                                                     defaultValue={marksForm.mark || ''}
                                                     onChange={handleInputChange}
                                                     placeholder="Enter Marks"

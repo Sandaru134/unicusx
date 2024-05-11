@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
         const students = await db.student_subjects_Status.findMany({
             where: {
-                institute_id: institute_id?.institute_id,
+                institute_id: institute_id.institute_id,
                 subject_id: subject_id,
                 student: {
                     class_id: classId?.class_id,

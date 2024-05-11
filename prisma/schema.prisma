@@ -154,7 +154,7 @@ model Classes {
 model Teachers {
   teacher_id          String             @id @default(uuid())
   index               String             @unique
-  nic                 String             @unique
+  nic                 String             
   password            String
   full_name           String
   gender              String
@@ -168,10 +168,11 @@ model Teachers {
   institute           Institutes         @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
   institute_id        String
   class               Classes?           @relation(fields: [class_id], references: [class_id], onUpdate: Cascade)
-  class_id            String?            @unique
+  class_id            String?            
   teacher_subjects    teacher_subjects[]
   term_class          Term_class[]
   final_report        Final_Report[]
+  report              Report[]
 }
 
 model teacher_subjects {
@@ -190,7 +191,7 @@ model teacher_subjects {
 model Principals {
   principal_id        String         @id @default(uuid())
   index               String         @unique
-  nic                 String         @unique
+  nic                 String         
   full_name           String
   gender              String
   type                String
@@ -277,6 +278,8 @@ model Report {
   class                Classes        @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
   completed            Boolean?       @default(false)
   class_teacher_signed Boolean?       @default(false)
+  teacher_id           String?
+  teacher              Teachers?      @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
   principal_signed     Boolean?       @default(false)
   total_marks          Int?
   total_students       Int?

@@ -16,10 +16,7 @@ const useYear = () => {
     useEffect(() => {
         fetchData();
     }, []);
-
-    console.log("this is year", data);
     
-
     return { data };
 };
 

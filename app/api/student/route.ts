@@ -1,5 +1,6 @@
 import { authOption } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { message } from 'antd';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
                 terms: {
                     term_name: term_name,
                 },
+                completed:true
             },
             include: {
                 student: true,
@@ -32,7 +34,7 @@ export async function POST(req: Request) {
             },
         });
         if (!report) {
-            return new NextResponse('Report not found', { status: 403 });
+            return NextResponse.json({message:'Report not found'}, { status: 403 });
         }
         return NextResponse.json(report, { status: 200 });
     } catch (error) {

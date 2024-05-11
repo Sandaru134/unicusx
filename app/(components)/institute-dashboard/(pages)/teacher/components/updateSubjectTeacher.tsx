@@ -16,7 +16,7 @@ interface SelectedValues {
     subject: any;
 }
 
-const values = ['sinhala', 'tamil', 'english'];
+const values = ['Sinhala', 'Tamil', 'English'];
 
 const UpdateSubjectTeacher: React.FC<UpdateSubjectTeacherProps> = ({ selectedRecord, selectedValues, setSelectedValues }) => {
     const [dropdownCount, setDropdownCount] = useState(0);

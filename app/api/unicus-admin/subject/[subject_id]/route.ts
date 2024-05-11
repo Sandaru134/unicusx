@@ -77,7 +77,7 @@ export async function PATCH(req: Request, { params }: { params: { subject_id: st
         const body = await req.json();
         const { name, institute_type, category } = body;
 
-        const subjectById = await db.subjects.findFirst({
+        const subjectById = await db.subjects.findUnique({
             where: {
                 subject_id: params.subject_id,
             },
@@ -87,12 +87,19 @@ export async function PATCH(req: Request, { params }: { params: { subject_id: st
             return new NextResponse('Unautherized', { status: 403 });
         }
 
+        let newName;
+
+        if (subjectById.name !== name || subjectById.category !== category) {
+            const subjectName = subjectById.name.split('-')[0] || ''
+            newName = `${subjectName}-${category}`;
+        }
+
         await db.subjects.update({
             where: {
                 subject_id: params.subject_id,
             },
             data: {
-                name,
+                name: newName,
                 institute_type,
                 category,
             },

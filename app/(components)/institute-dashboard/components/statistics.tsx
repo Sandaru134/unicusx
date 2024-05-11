@@ -16,13 +16,13 @@ const StatisticsPage = () => {
         };
 
         fetchData();
-    }, [data]);
+    }, []);
 
     return (
         <div className="flex flex-col justify-between gap-5 md:flex-row">
             <div className="h-[110px] w-[350px] rounded-md bg-white shadow-md">
                 <div className="flex w-full flex-row justify-between">
-                    <h1 className="p-5 text-lg font-semibold">Total users</h1>
+                    <h1 className="p-5 text-lg font-semibold">Total Users</h1>
                     <BsPersonFill fill="blue" className="mr-3 mt-3 size-[42px]" />
                 </div>
                 <h1 className="bottom-3 pl-5 align-text-bottom text-lg font-semibold">{data?.all_users || ''}</h1>

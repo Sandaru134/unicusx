@@ -14,6 +14,7 @@ export async function GET(req: Request) {
         const instituteStudents = await db.students.aggregate({
             where: {
                 institute_id: session.user.id,
+                left: false,
             },
             _count: true,
         });
@@ -21,6 +22,7 @@ export async function GET(req: Request) {
         const instituteTeachers = await db.teachers.aggregate({
             where: {
                 institute_id: session.user.id,
+                left: false,
             },
             _count: true,
         });
@@ -28,6 +30,7 @@ export async function GET(req: Request) {
         const institutePrincipal = await db.principals.aggregate({
             where: {
                 institute_id: session.user.id,
+                left: false,
             },
             _count: true,
         });

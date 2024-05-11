@@ -16,6 +16,8 @@ import IconLock from '@/components/icon/icon-lock';
 import { MdLogout } from 'react-icons/md';
 import { signOut } from 'next-auth/react';
 import { FaBook, FaSchool, FaUserLock } from 'react-icons/fa';
+import { ExclamationCircleFilled } from '@ant-design/icons';
+import { Modal } from 'antd';
 
 const Sidebar = () => {
     const dispatch = useDispatch();
@@ -31,6 +33,8 @@ const Sidebar = () => {
             return oldValue === value ? '' : value;
         });
     };
+
+    const { confirm } = Modal;
 
     const handleSignOut = async () => {
         await signOut({ redirect: false }); // Disable default redirect
@@ -71,6 +75,21 @@ const Sidebar = () => {
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
         selector?.classList.add('active');
     };
+
+    const showConfirm = () => {
+        confirm({
+          title: 'Are you sure you want to logout?',
+          icon: <ExclamationCircleFilled />,
+          centered: true,
+          onCancel() {
+            console.log('Cancel');
+          },
+          onOk() {
+            handleSignOut();
+          },
+        });
+      };
+      
 
     return (
         <div className={semidark ? 'dark' : ''}>
@@ -155,7 +174,7 @@ const Sidebar = () => {
                                         </Link>
                                     </li>
                                     <li className="fixed bottom-3 w-full">
-                                        <button onClick={handleSignOut} className="group">
+                                        <button onClick={showConfirm} className="group">
                                             <div className="ml-7 flex items-center justify-center">
                                                 <MdLogout className="shrink-0 group-hover:!text-primary" />
                                                 <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Logout')}</span>

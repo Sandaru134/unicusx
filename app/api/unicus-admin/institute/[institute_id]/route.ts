@@ -72,21 +72,79 @@ export async function PATCH(req: Request, { params }: { params: { institute_id: 
         }
 
         const body = await req.json();
-        const { institute_name, gender, institute_type, type, from, to, contact_number, password } = body;
+        const { institute_name, gender, institute_type, type, from, to, contact_number } = body;
 
         const institute = await db.institutes.findFirst({
             where: {
                 institute_id: params.institute_id,
             },
         });
+
         if (!institute) {
             return new NextResponse('Unautherized', { status: 403 });
+        }
+
+        let prefix;
+        let index: string = '';
+
+        if (institute.institute_type !== institute_type) {
+            let uniqueNumber;
+
+            const largestNumber = await db.institute_User_sequence.aggregate({
+                _max: {
+                    number: true,
+                },
+            });
+
+            if (largestNumber._max.number) {
+                let newNumber = largestNumber._max.number + 1;
+
+                uniqueNumber = await db.institute_User_sequence.create({
+                    data: {
+                        number: newNumber,
+                    },
+                });
+            } else {
+                let newNumber = 1;
+                uniqueNumber = await db.institute_User_sequence.create({
+                    data: {
+                        number: newNumber,
+                    },
+                });
+            }
+
+            if (institute_type === 'Pre-School') {
+                prefix = 'USL';
+
+                index = `${prefix}${uniqueNumber.number}`;
+            }
+
+            if (institute_type === 'School') {
+                prefix = 'USH'; 
+
+                index = `${prefix}${uniqueNumber.number}`;
+            }
+
+            if (institute_type === 'Piriven') {
+                prefix = 'USN';
+
+                index = `${prefix}${uniqueNumber.number}`;
+            }
+
+            await db.institute_admin.update({
+                where: {
+                    institute_id: params.institute_id,
+                },
+                data: {
+                    index: index,
+                },
+            });
         }
 
         await db.institutes.update({
             where: {
                 institute_id: params.institute_id,
-            },
+            }, 
             data: {
                 institute_name,
                 gender,
@@ -95,15 +153,6 @@ export async function PATCH(req: Request, { params }: { params: { institute_id: 
                 from,
                 to,
                 contact_number,
-            },
-        });
-
-        await db.institute_admin.update({
-            where: {
-                institute_id: params.institute_id,
-            },
-            data: {
-                password,
             },
         });
 
@@ -116,7 +165,7 @@ export async function PATCH(req: Request, { params }: { params: { institute_id: 
             },
         });
 
-        return NextResponse.json(updatedRecord);
+        return NextResponse.json(updatedRecord,{status:200});
     } catch (error) {
         console.log(error);
         return new NextResponse('Internal error', { status: 500 });

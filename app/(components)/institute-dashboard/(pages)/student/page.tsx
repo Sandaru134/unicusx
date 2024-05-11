@@ -14,6 +14,7 @@ import { fetchAllStudents } from '@/utils';
 import StatisticsPage from '../../components/statistics';
 import { Option } from 'antd/es/mentions';
 import useYear from '@/utils/useYear';
+import CustomButton from '@/components/button';
 
 const StudentRegistrationPage = () => {
     const [addStudentModal, setAddStudentModal] = useState<boolean>(false);
@@ -24,6 +25,8 @@ const StudentRegistrationPage = () => {
     const [gradeLevel, setGradeLevel] = useState('');
     const [className, setClassName] = useState('');
     const [search, setSearch] = useState('');
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data } = useYear();
 
@@ -112,11 +115,11 @@ const StudentRegistrationPage = () => {
 
     useEffect(() => {
         fetchStudents();
-    }, [students]);
+    }, []);
 
     useEffect(() => {
         setRecordsData(students);
-    }, [students]);
+    }, []);
 
     const handleView = (record: any) => {
         setViewFormData({
@@ -163,11 +166,13 @@ const StudentRegistrationPage = () => {
 
     // create student
     const submitForm = async (data: z.infer<typeof FormSchema>) => {
+        setIsSubmitting(true);
         try {
             const response = await axios.post('/api/institute-admin/student', data, {
                 headers: { 'Content-Type': 'application/json' },
             });
             if (response.status === 201) {
+                fetchStudents();
                 setAddStudentModal(false);
                 toast.success('Successfully Student created!');
                 reset();
@@ -176,6 +181,8 @@ const StudentRegistrationPage = () => {
             }
         } catch (error) {
             toast.error('Failed to create!');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -235,15 +242,15 @@ const StudentRegistrationPage = () => {
 
             <div className="mb-3 mt-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
-                <Space wrap className="gap-10 pl-3">
-                    <Select defaultValue="Select Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
+                <Space wrap className="gap-12 pl-3">
+                    <Select placeholder="Select Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
                         {data.map((year: any, index) => (
                             <Option key={year} value={year}>
                                 {year}
                             </Option>
                         ))}
                     </Select>
-                    <Select defaultValue="Select Grade" style={{ width: 300 }} onChange={(value) => setGradeLevel(value)}>
+                    <Select placeholder="Select Grade" style={{ width: 300 }} onChange={(value) => setGradeLevel(value)}>
                         {grade.map((value, index) => (
                             <Option key={value} value={value}>
                                 {value}
@@ -251,7 +258,7 @@ const StudentRegistrationPage = () => {
                         ))}
                     </Select>
 
-                    <Select defaultValue="Select Class" style={{ width: 300 }} onChange={(value) => setClassName(value)}>
+                    <Select placeholder="Select Class" style={{ width: 300 }} onChange={(value) => setClassName(value)}>
                         {class_name.map((value, index) => (
                             <Option key={value} value={value}>
                                 {value}
@@ -280,17 +287,18 @@ const StudentRegistrationPage = () => {
                         className="justify-start self-start font-semibold"
                         render={(text, record: any) => (
                             <div>
-                                {record.student_type === 'Primary' && <Tag color="orange">Primary</Tag>}
-                                {record.student_type === 'Senior Secondary' && <Tag color="blue">Senior Secondary</Tag>}
-                                {record.student_type === 'Junior Secondary' && <Tag color="green">Junior Secondary</Tag>}
-                                {record.student_type === 'Collegiate' && <Tag color="purple">Collegiate</Tag>}
+                                {record.student_type === 'Kindergarten' && <CustomButton title='Kindergarten' width='26' textColor='text-red-600' color='bg-red-100' bgColor='' />}
+                                {record.student_type === 'Primary' && <CustomButton title='Primary' width='26' textColor='text-orange-500' color='bg-orange-100' bgColor='' />}
+                                {record.student_type === 'Senior Secondary' && <CustomButton title='Senior Secondary' width='26' textColor='text-blue-700' color='bg-blue-100' bgColor='' />}
+                                {record.student_type === 'Junior Secondary' && <CustomButton title='Junior Secondary' width='26' textColor='text-green-600' color='bg-green-100' bgColor='' />}
+                                {record.student_type === 'Collegiate' && <CustomButton title='Collegiate' width='26' textColor='text-fuchsia-600' color='bg-fuchsia-100' bgColor='' />}
                             </div>
                         )}
                     />
-                    <Column title="MEDIUM" dataIndex="medium" key="medium" className="justify-start self-start font-semibold" />
+                    <Column title="MEDIUM" dataIndex="medium" key="medium" className="justify-start self-start font-semibold" width={400} />
                     <Column
                         className="flex justify-end self-end "
-                        title="ACTION"
+                        title="ACTIONS"
                         key="action"
                         render={(_, record: any) => (
                             <Dropdown
@@ -345,7 +353,7 @@ const StudentRegistrationPage = () => {
                                     <Dialog.Panel className="panel my-8 w-[400px] max-w-lg overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark">
                                         <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                             <div className="text-lg font-bold">Add user</div>
-                                            <button type="button" onClick={() => setAddStudentModal(false)} className="text-white-dark hover:text-dark">
+                                            <button disabled={isSubmitting} type="button" onClick={() => setAddStudentModal(false)} className="text-white-dark hover:text-dark">
                                                 <BsXLg />
                                             </button>
                                         </div>
@@ -368,9 +376,9 @@ const StudentRegistrationPage = () => {
                                                         placeholder="Gender"
                                                         {...register('gender', { required: true })}
                                                         options={[
-                                                            { value: 'male', label: 'Male' },
-                                                            { value: 'female', label: 'Female' },
-                                                            { value: 'other', label: 'Other' },
+                                                            { value: 'Male', label: 'Male' },
+                                                            { value: 'Female', label: 'Female' },
+                                                            { value: 'Other', label: 'Other' },
                                                         ]}
                                                         onChange={(value) => setValue('gender', value)}
                                                     />
@@ -472,7 +480,7 @@ const StudentRegistrationPage = () => {
                                                 />
                                                 {errors.contact_number && <span className="error text-red-500">{errors.contact_number.message}</span>}
                                                 <div className="flex w-full items-center justify-center pt-2">
-                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                    <button disabled={isSubmitting} type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
                                                         Save
                                                     </button>
                                                 </div>
@@ -583,7 +591,7 @@ const StudentRegistrationPage = () => {
                                     <Dialog.Panel className="panel my-8 w-[400px] max-w-lg overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark">
                                         <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                             <div className="text-lg font-bold">Add user</div>
-                                            <button type="button" onClick={() => setUpdateStudentModal(false)} className="text-white-dark hover:text-dark">
+                                            <button disabled={isSubmitting} type="button" onClick={() => setUpdateStudentModal(false)} className="text-white-dark hover:text-dark">
                                                 <BsXLg />
                                             </button>
                                         </div>
@@ -607,9 +615,9 @@ const StudentRegistrationPage = () => {
                                                         placeholder="Gender"
                                                         defaultValue={updateFormData.gender || ''}
                                                         options={[
-                                                            { value: 'male', label: 'Male' },
-                                                            { value: 'female', label: 'Female' },
-                                                            { value: 'other', label: 'Other' },
+                                                            { value: 'Male', label: 'Male' },
+                                                            { value: 'Female', label: 'Female' },
+                                                            { value: 'Other', label: 'Other' },
                                                         ]}
                                                         onChange={(value) => handleSelectChange('gender', value)}
                                                     />
@@ -726,7 +734,7 @@ const StudentRegistrationPage = () => {
                                                     className="form-input placeholder:text-white-dark"
                                                 />
                                                 <div className="flex w-full items-center justify-center pt-2">
-                                                    <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                    <button disabled={isSubmitting} type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
                                                         Save Change
                                                     </button>
                                                 </div>

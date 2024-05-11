@@ -19,6 +19,7 @@ const ContentAnimation = ({ children }: { children: React.ReactNode }) => {
             setAnimation('');
         }, 1100);
     }, [pathname]);
+    
     return (
         <>
             {/* BEGIN CONTENT AREA */}

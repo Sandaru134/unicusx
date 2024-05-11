@@ -28,7 +28,7 @@ const SubjectTeacher: React.FC<SubjectTeacherProps> = ({ onValuesChange }) => {
         fetchData();
     }, []);
 
-    const values = ['sinhala', 'tamil', 'english'];
+    const values = ['Sinhala', 'Tamil', 'English'];
 
     const handleAddClick = (e: any) => {
         e.preventDefault();
@@ -131,6 +131,7 @@ const SubjectTeacher: React.FC<SubjectTeacherProps> = ({ onValuesChange }) => {
         }
         return dropdowns;
     };
+    
     return (
         <div style={{ marginTop: 5 }}>
             {renderDropdowns()}

@@ -4,7 +4,7 @@ import { hash } from 'bcrypt';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 
-export async function POST(req: Request) {
+export async function POST(req: Request, res: Response) {
     try {
         const session = await getServerSession(authOption);
 
@@ -14,6 +14,13 @@ export async function POST(req: Request) {
 
         const body = await req.json();
         const { nic, password, full_name, gender, grade, class_name, subjects_teacher, contact_number } = body;
+
+        //validate subjects_teacher
+        for (const subject_teacher of subjects_teacher) {
+            if (!subject_teacher.subject || !subject_teacher.grade || !subject_teacher.class || !subject_teacher.medium) {
+                return NextResponse.json({ message: 'Invalid data' }, { status: 403 });
+            }
+        }
 
         let uniqueNumber;
 
@@ -40,9 +47,8 @@ export async function POST(req: Request) {
             });
         }
 
-        const prefix = 'UST';
-
-        const teacher_index = `${prefix}${uniqueNumber.number}`;
+        let prefix;
+        let teacher_index;
 
         const hashedPassword = await hash(password, 10);
 
@@ -50,6 +56,10 @@ export async function POST(req: Request) {
 
         //without class teacher
         if (!grade || !class_name) {
+            prefix = 'USB';
+
+            teacher_index = `${prefix}${uniqueNumber.number}`;
+
             newTeacher = await db.teachers.create({
                 data: {
                     index: teacher_index,
@@ -71,7 +81,7 @@ export async function POST(req: Request) {
                 });
 
                 if (!existSubject) {
-                    return new NextResponse('Subject does not exist', { status: 403 });
+                    return NextResponse.json({ message: 'Subject does not exist' }, { status: 403 });
                 }
                 const existClass = await db.classes.findFirst({
                     where: {
@@ -130,6 +140,10 @@ export async function POST(req: Request) {
             return NextResponse.json(newTeacher, { status: 201 });
         }
 
+        //with class teacher
+        prefix = 'UST';
+        teacher_index = `${prefix}${uniqueNumber.number}`;
+
         const classTeacher = await db.classes.findFirst({
             where: {
                 grade_level: grade,
@@ -182,12 +196,14 @@ export async function POST(req: Request) {
         } else {
             const existClassTeacher = await db.teachers.findFirst({
                 where: {
+                    institute_id: session.user.id,
+                    left: false,
                     class_id: classTeacher?.class_id,
                 },
             });
 
             if (existClassTeacher) {
-                return new NextResponse('class teacher already exist', { status: 403 });
+                return NextResponse.json({ message: 'Class teacher already exist' }, { status: 403 });
             }
 
             newTeacher = await db.teachers.create({
@@ -214,7 +230,7 @@ export async function POST(req: Request) {
             });
 
             if (!existSubject) {
-                return new NextResponse('Subject does not exist', { status: 403 });
+                return NextResponse.json({ message: 'Subject does not exist' }, { status: 403 });
             }
             const existClass = await db.classes.findFirst({
                 where: {
@@ -270,10 +286,11 @@ export async function POST(req: Request) {
                 });
             }
         }
+
         return NextResponse.json(newTeacher, { status: 201 });
     } catch (error) {
         console.log(error);
-        return new NextResponse('Internal error', { status: 500 });
+        return NextResponse.json({ message: 'Internal error' }, { status: 500 });
     } finally {
         db.$disconnect();
     }
@@ -284,13 +301,13 @@ export async function GET(req: Request) {
         const session = await getServerSession(authOption);
 
         if (!session) {
-            return new NextResponse('Unauthenticated', { status: 403 });
+            return NextResponse.json({ message: 'Unauthenticated' }, { status: 403 });
         }
 
         const teachers = await db.teachers.findMany({
             where: {
                 institute_id: session.user.id,
-                left:false
+                left: false,
             },
             include: {
                 class: true,
@@ -305,7 +322,7 @@ export async function GET(req: Request) {
         return NextResponse.json(teachers, { status: 200 });
     } catch (error) {
         console.log(error);
-        return new NextResponse('Internal error', { status: 500 });
+        return NextResponse.json({ message: 'Internal error' }, { status: 500 });
     } finally {
         db.$disconnect();
     }

@@ -11,7 +11,7 @@ export async function PATCH(req: Request, { params }: { params: { user_id: strin
         if (!session) {
             return new NextResponse('Unauthenticated', { status: 403 });
         }
-//ds
+
         if (!params.user_id) {
             return new NextResponse('Institute id is required', { status: 400 });
         }
@@ -47,6 +47,57 @@ export async function PATCH(req: Request, { params }: { params: { user_id: strin
             return NextResponse.json(updatedUser, { status: 200 });
         }
 
+        if (prefix === 'USB') {
+            const updatedUser = await db.teachers.update({
+                where: {
+                    index: params.user_id,
+                },
+                data: {
+                    password: hashedPassword,
+                },
+            });
+
+            return NextResponse.json(updatedUser, { status: 200 });
+        }
+
+        if (prefix === 'USH') {
+            const updatedUser = await db.institute_admin.update({
+                where: {
+                    index: params.user_id,
+                },
+                data: {
+                    password: hashedPassword,
+                },
+            });
+
+            return NextResponse.json(updatedUser, { status: 200 });
+        }
+
+        if (prefix === 'USL') {
+            const updatedUser = await db.institute_admin.update({
+                where: {
+                    index: params.user_id,
+                },
+                data: {
+                    password: hashedPassword,
+                },
+            });
+
+            return NextResponse.json(updatedUser, { status: 200 });
+        }
+
+        if (prefix === 'USN') {
+            const updatedUser = await db.institute_admin.update({
+                where: {
+                    index: params.user_id,
+                },
+                data: {
+                    password: hashedPassword,
+                },
+            });
+
+            return NextResponse.json(updatedUser, { status: 200 });
+        }
 
         return new NextResponse('Invalid user id', { status: 403 });
     } catch (error) {

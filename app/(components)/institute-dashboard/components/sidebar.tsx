@@ -22,6 +22,8 @@ import { FaChalkboardTeacher } from 'react-icons/fa';
 import { IoPeopleOutline } from 'react-icons/io5';
 import { FaMarker } from "react-icons/fa";
 import { signOut, useSession } from 'next-auth/react';
+import { Modal } from 'antd';
+import { ExclamationCircleFilled } from '@ant-design/icons';
 
 
 const Sidebar = () => {
@@ -29,6 +31,9 @@ const Sidebar = () => {
     const { t } = getTranslation();
     const pathname = usePathname();
     const router = useRouter();
+
+    const { confirm } = Modal;
+
 
     const [currentMenu, setCurrentMenu] = useState<string>('');
     const [errorSubMenu, setErrorSubMenu] = useState(false);
@@ -79,6 +84,20 @@ const Sidebar = () => {
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
         selector?.classList.add('active');
     };    
+
+    const showConfirm = () => {
+        confirm({
+          title: 'Are you sure you want to logout?',
+          icon: <ExclamationCircleFilled />,
+          centered: true,
+          onCancel() {
+            console.log('Cancel');
+          },
+          onOk() {
+            handleSignOut();
+          },
+        });
+      };
 
     return (
         <div className={semidark ? 'dark' : ''}>
@@ -171,7 +190,7 @@ const Sidebar = () => {
                                         </Link>
                                     </li>
                                     <li className="bottom-3 fixed w-full">
-                                        <button onClick={handleSignOut} className="group">
+                                        <button onClick={showConfirm} className="group">
                                             <div className="flex items-center justify-center ml-7">
                                                 <MdLogout className="shrink-0 group-hover:!text-primary" />
                                                 <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Logout')}</span>
@@ -269,7 +288,7 @@ const Sidebar = () => {
                                 <Link href="/institute-dashboard/principle" className="group">
                                     <div className="flex items-center">
                                         <FaUserTie className="shrink-0 group-hover:!text-primary icon" />
-                                        <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Principle')}</span>
+                                        <span className="text-black dark:text-[#506690] dark:group-hover:text-white-dark ltr:pl-3 rtl:pr-3">{t('Principal')}</span>
                                     </div>
                                 </Link>
                             </li>

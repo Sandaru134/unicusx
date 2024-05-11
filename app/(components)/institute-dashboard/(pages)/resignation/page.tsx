@@ -112,30 +112,30 @@ const ResignationPage = () => {
             {/* search filter */}
             <div className="mb-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
-                <Space wrap className="flex flex-row items-center justify-between pl-5 pr-5">
-                    <Select
-                        defaultValue="User"
-                        style={{ width: 300 }}
-                        options={[
-                            { value: 'student', label: 'Student' },
-                            { value: 'teacher', label: 'Teacher' },
-                            { value: 'principal', label: 'Principal' },
-                        ]}
-                        onChange={(value) => {
-                            setUser(value);
-                            handleSelectChange(value);
-                        }}
-                    />
+                <Space wrap className="flex flex-row items-center justify-between pl-3 pr-3">
 
-                    <Select defaultValue="Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
+                    <Select placeholder="Select Year" style={{ width: 300 }} onChange={(value) => setYear(value)}>
                         {data.map((year: any, index: any) => (
                             <Option key={year} value={year}>
                                 {year}
                             </Option>
                         ))}
                     </Select>
+                        <Select
+                            placeholder="Select User"
+                            style={{ width: 300 }}
+                            options={[
+                                { value: 'student', label: 'Student' },
+                                { value: 'teacher', label: 'Teacher' },
+                                { value: 'principal', label: 'Principal' },
+                            ]}
+                            onChange={(value) => {
+                                setUser(value);
+                                handleSelectChange(value);
+                            }}
+                        />
                     <Select
-                        defaultValue="Grade"
+                        placeholder="Select Grade"
                         style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
@@ -156,7 +156,7 @@ const ResignationPage = () => {
                         onChange={(value) => setGrade(value)}
                     />
                     <Select
-                        defaultValue="Class"
+                        placeholder="Select Class"
                         style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
@@ -215,7 +215,7 @@ const ResignationPage = () => {
                         width={400}
                     />
                     <Column
-                        title="Date of Resignation"
+                        title="DATE OF RESIGNATION"
                         dataIndex="date_of_resignation"
                         key="date_of_resignation"
                         className="font-semibold"

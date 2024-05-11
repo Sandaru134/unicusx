@@ -41,6 +41,7 @@ export async function POST(req: Request) {
 
         const addedStudents = await db.student_subjects_Status.findMany({
             where: {
+                institute_id: session.user.id,
                 added: true,
             },include:{
                 student:true,
@@ -63,6 +64,7 @@ export async function POST(req: Request) {
         const students = await db.students.findMany({
             where: {
                 institute_id: session.user.id,
+                left:false
             },
         });
         for (const student of students) {

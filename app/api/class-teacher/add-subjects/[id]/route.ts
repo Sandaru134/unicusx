@@ -55,7 +55,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             });
 
             for (const term of terms) {
-                await db.marks.create({
+                const mark = await db.marks.create({
                     data: {
                         student_subject_id: status.id,
                         student_id: status.student_id,
@@ -65,6 +65,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                         institute_id: status.institute_id,
                     },
                 });
+                console.log(mark)
             }
         }
 

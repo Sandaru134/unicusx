@@ -52,10 +52,12 @@ export default function SignInForm() {
         if (status === 'authenticated') {
             if (session?.user.prefix === 'USX') {
                 router.push('/admin-dashboard');
-            } else if (session?.user.prefix === 'USH') {
+            } else if (session?.user.prefix === 'USH' || session?.user.prefix === 'USL' || session?.user.prefix === 'USN') {
                 router.push('/institute-dashboard');
             } else if (session?.user.prefix === 'UST') {
                 router.push('/teacher-dashboard');
+            } else if (session?.user.prefix === 'USB') {
+                router.push('/teacher-dashboard/marks');
             } else if (session?.user.prefix === 'USS') {
                 router.push('/student-dashboard');
             }
@@ -72,14 +74,14 @@ export default function SignInForm() {
             <form className="space-y-5 dark:text-white" onSubmit={handleSubmit(submitForm)}>
                 <div>
                     <label htmlFor="Email">User ID</label>
-                    <div className="relative text-white-dark border border-1 rounded-md border-[#3278FF]">
+                    <div className="border-1 relative rounded-md border border-[#3278FF] text-white-dark">
                         <input id="Email" {...register('username')} placeholder="Enter User ID" className="form-input placeholder:text-white-dark" />
                     </div>
                     {errors.username && <span className="error text-red-500">{errors.username.message}</span>}
                 </div>
                 <div>
                     <label htmlFor="Password">Password</label>
-                    <div className="relative text-white-dark border border-1 border-[#3278FF] rounded-md">
+                    <div className="border-1 relative rounded-md border border-[#3278FF] text-white-dark">
                         <input id="Password" {...register('password')} type={showPassword ? 'text' : 'password'} placeholder="Enter Password" className="form-input placeholder:text-white-dark" />
                         <button type="button" className="password-toggle absolute right-2 top-1/2 -translate-y-1/2 transform" onClick={handleTogglePassword}>
                             {showPassword ? <EyeIcon /> : <EyeOffIcon />}

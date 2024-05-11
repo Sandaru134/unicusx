@@ -17,7 +17,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         const body = await req.json();
 
         const { mark } = body;
-console.log(mark)
+
         const updatedMarks = await db.marks.update({
             where: {
                 id: params.id,

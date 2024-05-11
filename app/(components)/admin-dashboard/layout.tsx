@@ -9,9 +9,21 @@ import Portals from '@/components/portals';
 import Sidebar from './components/sidebar';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Popover } from 'antd';
+import Image from 'next/image';
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {
+    const [open, setOpen] = useState(false);
+
+    const hide = () => {
+        setOpen(false);
+    };
+
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen);
+    };
+
     const { data: session } = useSession();
     const router = useRouter();
 
@@ -41,7 +53,30 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
                             {/* BEGIN TOP NAVBAR */}
                             <Header />
                             {/* END TOP NAVBAR */}
-                            <ContentAnimation>{children}</ContentAnimation>
+                            <ContentAnimation>
+                                {children}
+                                <div className="fixed bottom-14 right-0 pr-8">
+                                    <Popover
+                                        content={
+                                            <div className="flex flex-col gap-2 p-2">
+                                                <a href="http://t.me/unicusx">
+                                                    <Image src="/assets/images/telegram.png" className="hover:cursor-pointer" alt="Telegram" width={40} height={20} />
+                                                </a>
+                                                <a href="https://wa.me/message/CBV4XZVJWDETO1">
+                                                    <Image src="/assets/images/whatsapp.png" className="hover:cursor-pointer" alt="WhatsApp" width={43} height={20} />
+                                                </a>
+                                            </div>
+                                        }
+                                        trigger="click"
+                                        placement="topRight"
+                                        open={open}
+                                        onOpenChange={handleOpenChange}
+                                    >
+                                        {/* Chat icon */}
+                                        <Image src="/assets/images/chat.png" className="hover:cursor-pointer" alt="Chat" width={50} height={20} />
+                                    </Popover>
+                                </div>
+                            </ContentAnimation>
 
                             {/* BEGIN FOOTER */}
                             <Footer />

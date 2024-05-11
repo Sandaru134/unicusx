@@ -84,8 +84,8 @@ const SignPage = () => {
             <div className="mb-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <form className="flex flex-row justify-between" onSubmit={handleSubmit}>
-                    <Space wrap className="gap-8 pl-3">
-                        <Select defaultValue="Select Year" style={{ width: 300 }} onChange={(value) => handleSelectChange('year', value)}>
+                    <Space wrap className="gap-12 justify-between pl-3">
+                        <Select placeholder="Select Year" style={{ width: 300 }} onChange={(value) => handleSelectChange('year', value)}>
                             {data.map((year: any, index) => (
                                 <Option key={year} value={year}>
                                     {year}
@@ -93,7 +93,7 @@ const SignPage = () => {
                             ))}
                         </Select>
                         <Select
-                            defaultValue="Select Term"
+                            placeholder="Select Term"
                             style={{ width: 300 }}
                             options={[
                                 { value: 'First', label: 'First' },
@@ -102,7 +102,7 @@ const SignPage = () => {
                             ]}
                             onChange={(value) => handleSelectChange('term_name', value)}
                         />
-                        <Select defaultValue="Select Grade" style={{ width: 300 }} onChange={(value) => handleSelectChange('grade_level', value)}>
+                        <Select placeholder="Select Grade" style={{ width: 300 }} onChange={(value) => handleSelectChange('grade_level', value)}>
                             {grade_level.map((value, index) => (
                                 <Option key={value} value={value}>
                                     {value}
@@ -110,7 +110,7 @@ const SignPage = () => {
                             ))}
                         </Select>
                     </Space>
-                    <button disabled={isSubmitting === true} type="submit" className="mr-3 w-[130px] items-center rounded-md bg-blue-600 p-1 font-semibold text-white">
+                    <button disabled={isSubmitting === true} type="submit" className="mr-3 w-[130px] items-center rounded-md bg-blue-600 p-2 font-semibold text-white">
                         Filter
                     </button>
                 </form>
@@ -120,22 +120,21 @@ const SignPage = () => {
                     {/* <input className="form-input mr-[20px] h-[40px] w-[200px]" placeholder="Search..." value={search} onChange={(e) => handleSearch(e.target.value)} /> */}
                 </div>
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
-                    <Column title="CLASS" align="start" dataIndex={['class', 'class_name']} key="class_name" className="justify-start self-start font-semibold" width={300} />
+                    <Column title="CLASS" align="start" dataIndex={['class', 'class_name']} key="class_name" className="justify-start self-start font-semibold" width={800} />
                     <Column
                         title="CLASS TEACHER"
-                        align="center"
-                        width={950}
+                        
+                        width={900}
                         key="class_teacher_signed"
                         className="font-semibold"
                         render={(record) => (
-                            <button disabled className={`items-center rounded px-4 ${record.teacher_signed ? 'bg-green-200 text-green-600' : 'bg-gray-500 text-gray-200'} hover:bg-opacity-75`}>
+                            <button disabled className={`items-center rounded px-4 ${record.teacher_signed ? 'bg-green-100 text-green-500' : 'bg-stone-400 text-stone-100'} hover:bg-opacity-75`}>
                                 {record.teacher_signed ? 'Signed' : 'Sign'}
                             </button>
                         )}
                     />
                     <Column
-                        title="PRINCIPLE"
-                        align="end"
+                        title="PRINCIPAL"
                         dataIndex="principal_signed"
                         key="principal_signed"
                         className="justify-start self-start font-semibold"
@@ -143,7 +142,7 @@ const SignPage = () => {
                             <button
                                 disabled={record.teacher_signed === false || record.principal_signed === true}
                                 onClick={() => handleButtonClick(record.id)}
-                                className={`items-center rounded px-4 ${record.principal_signed ? 'bg-blue-200 text-blue-600' : 'bg-gray-500 text-gray-200'} hover:bg-opacity-75`}
+                                className={`items-center rounded px-4 ${record.principal_signed ? 'bg-blue-100 text-blue-600' : 'bg-stone-400 text-stone-100'} hover:bg-opacity-75`}
                             >
                                 {record.principal_signed ? 'Signed' : 'Sign'}
                             </button>

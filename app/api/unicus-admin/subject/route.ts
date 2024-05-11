@@ -24,10 +24,50 @@ export async function POST(req: Request) {
             },
         });
 
-        if(institute_type === 'school'){
+        if(institute_type === 'School'){
             const institutes = await db.institutes.findMany({
                 where: {
-                  institute_type:'school'  
+                  institute_type:'School'  
+                },
+                select: {
+                    institute_id: true,
+                },
+            });
+
+            for (const institute of institutes) {
+                await db.institute_subject_status.create({
+                    data: {
+                        institute_id: institute.institute_id,
+                        subject_id: newSubject.subject_id,
+                    },
+                });
+            }
+        }
+
+        if(institute_type === 'Piriven'){
+            const institutes = await db.institutes.findMany({
+                where: {
+                  institute_type:'Piriven'  
+                },
+                select: {
+                    institute_id: true,
+                },
+            });
+
+            for (const institute of institutes) {
+                await db.institute_subject_status.create({
+                    data: {
+                        institute_id: institute.institute_id,
+                        subject_id: newSubject.subject_id,
+                    },
+                });
+            }
+        }
+
+        if(institute_type === 'Pre-School'){
+            const institutes = await db.institutes.findMany({
+                where: {
+                  institute_type:'Pre-School'  
                 },
                 select: {
                     institute_id: true,

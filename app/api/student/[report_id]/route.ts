@@ -52,7 +52,9 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
                     student_id: report.student_id,
                     term_id: term_id,
                     absent: false,
-                },
+                },orderBy:{
+                    updatedAt:'asc'
+                }
             });
 
 
@@ -60,6 +62,7 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
             let pass = '';
             let average: Number;
             let formattedAverage: string;
+            let nextTerm;
 
             //find highest total mark
             const highest_total_mark = await db.report.aggregate({
@@ -126,14 +129,14 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
             }
 
             //get teacher details
-            const teacherDetails = await db.teachers.findUnique({
-                where: {
-                    teacher_id: session.user.id,
-                },
-            });
-            if (!teacherDetails) {
-                return new NextResponse('teacher details not found', { status: 403 });
-            }
+            // const teacherDetails = await db.teachers.findUnique({
+            //     where: {
+            //         teacher_id: session.user.id,
+            //     },
+            // });
+            // if (!teacherDetails) {
+            //     return new NextResponse('teacher details not found', { status: 403 });
+            // }
 
             //create final report
             for (const mark of marks) {
@@ -224,7 +227,7 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
 
                 const rank = findRank(report.id) + 1;
 
-                let nextTerm;
+               
 
                 switch (true) {
                     case report.terms.term_name === 'First':
@@ -265,7 +268,9 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
 
                         break;
                 }
-
+                if(!report.teacher_id){
+                    return new NextResponse('Report not found', { status: 403 });
+                }
                 await db.final_Report.create({
                     data: {
                         institute_id: mark.institute_id,
@@ -281,7 +286,7 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
                         highest_total_mark: highest_total_mark._max.total_marks,
                         average: numericFormattedAverage,
                         rank: rank,
-                        teacher_id: teacherDetails.teacher_id,
+                        teacher_id: report.teacher_id,
                         teacher_signed_date: report.updatedAt,
                         principal_id: principalDetails.principal_id,
                         principal_signed_date: report.updatedAt,
@@ -299,7 +304,9 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
             });
 
             for (const mark of absentMarks) {
-
+                if(!report.teacher_id){
+                    return new NextResponse('Report not found', { status: 403 });
+                }
                 await db.final_Report.create({
                     data: {
                         institute_id: mark.institute_id,
@@ -311,10 +318,11 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
                         total_students: report.total_students,
                         highest_total_mark: highest_total_mark._max.total_marks,
                         average: numericFormattedAverage,
-                        teacher_id: teacherDetails.teacher_id,
+                        teacher_id:  report.teacher_id,
                         principal_id: principalDetails.principal_id,
                         principal_signed_date: report.updatedAt,
                         teacher_signed_date: report.updatedAt,
+                        next_term_start_date: nextTerm?.start,
                     },
                 });
             }
@@ -359,10 +367,28 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
                             principal_signed: true,
                         },
                     },
-                },
+                },orderBy:{
+                    updatedAt: 'asc'
+                }
             });
 
-            return NextResponse.json(final_report, { status: 200 });
+            const sortedFinalReport = final_report.sort((a, b) => {
+                // Assuming 'column_value' refers to the column you're checking
+                const columnValueA = a.pass;
+                const columnValueB = b.pass;
+            
+                // If column value is 'AB', place it last
+                if (columnValueA === 'Ab' && columnValueB !== 'Ab') return 1;
+                if (columnValueA !== 'Ab' && columnValueB === 'Ab') return -1;
+            
+                // If neither is 'AB', maintain the original order
+                if (columnValueA !== 'Ab' && columnValueB !== 'Ab') return 0;
+            
+                // If both are 'AB', maintain the original order
+                return 0;
+            });
+
+            return NextResponse.json(sortedFinalReport, { status: 200 });
         }
 
         const final_report = await db.final_Report.findMany({
@@ -406,10 +432,27 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
                         principal_signed: true,
                     },
                 },
-            },
+            },orderBy:{
+                updatedAt: 'asc'
+            }
         });
-
-        return NextResponse.json(final_report, { status: 200 });
+        const sortedFinalReport = final_report.sort((a, b) => {
+            // Assuming 'column_value' refers to the column you're checking
+            const columnValueA = a.pass;
+            const columnValueB = b.pass;
+        
+            // If column value is 'AB', place it last
+            if (columnValueA === 'Ab' && columnValueB !== 'Ab') return 1;
+            if (columnValueA !== 'Ab' && columnValueB === 'Ab') return -1;
+        
+            // If neither is 'AB', maintain the original order
+            if (columnValueA !== 'Ab' && columnValueB !== 'Ab') return 0;
+        
+            // If both are 'AB', maintain the original order
+            return 0;
+        });
+        
+        return NextResponse.json(sortedFinalReport, { status: 200 });
     } catch (error) {
         console.log(error);
         return new NextResponse('Internal error', { status: 500 });

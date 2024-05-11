@@ -124,6 +124,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                     if (studentGrade < 13) {
                         const newStudentGrade = studentGrade + 1;
 
+                        let student_type;
+
+                        if (newStudentGrade >= 1 && newStudentGrade <= 5) {
+                            student_type = 'Primary';
+                        }
+                        if (newStudentGrade >= 6 && newStudentGrade <= 9) {
+                            student_type = 'Junior Secondary';
+                        }
+                        if (newStudentGrade >= 10 && newStudentGrade <= 11) {
+                            student_type = 'Senior Secondary';
+                        }
+                        if (newStudentGrade >= 12 && newStudentGrade <= 13) {
+                            student_type = 'Collegiate';
+                        }
+
                         const newclass = await db.classes.findFirst({
                             where: {
                                 grade_level: newStudentGrade,
@@ -163,6 +178,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                                 },
                                 data: {
                                     class_id: newClass?.class_id,
+                                    student_type: student_type,
                                 },
                             });
                         } else {
@@ -172,6 +188,41 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                                 },
                                 data: {
                                     class_id: newclass?.class_id,
+                                    student_type: student_type,
+                                },
+                            });
+                        }
+                    } else {
+                        const currentDate = new Date();
+
+                        const updatedStudent = await db.students.update({
+                            where: {
+                                index: student.index,
+                            },
+                            data: {
+                                left: true,
+                                date_of_resignation: currentDate,
+                            },
+                        });
+
+                        const uncomletedTerms = await db.terms.findMany({
+                            where: {
+                                institute_id: session.user.id,
+                                completed: false,
+                            },
+                        });
+
+                        await db.student_subjects_Status.deleteMany({
+                            where: {
+                                student_id: updatedStudent.student_id,
+                            },
+                        });
+
+                        for (const term of uncomletedTerms) {
+                            await db.marks.deleteMany({
+                                where: {
+                                    student_id: updatedStudent.student_id,
+                                    term_id: term.term_id,
                                 },
                             });
                         }

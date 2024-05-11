@@ -1,6 +1,6 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Dropdown, Menu, Select, Space, Table } from 'antd';
+import { Button, Dropdown, Menu, Modal, Select, Space, Table } from 'antd';
 import Column from 'antd/es/table/Column';
 import React, { Fragment, useEffect, useState } from 'react';
 import { BsEye, BsPencil, BsThreeDotsVertical, BsTrash, BsXLg } from 'react-icons/bs';
@@ -11,11 +11,14 @@ import { Dialog, Transition } from '@headlessui/react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { fetchSubject, handleSubjectDelete } from '@/utils';
+import { ExclamationCircleFilled } from '@ant-design/icons';
 
 const SubjectPage = () => {
     const [addSubjectModal, setAddSubjectModal] = useState<boolean>(false);
     const [viewSubjectModal, setViewSubjectModal] = useState<boolean>(false);
     const [editSubjectModal, setEditSubjectModal] = useState<boolean>(false);
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [recordsData, setRecordsData] = useState([]);
     const [subject, setSubject] = useState<any>([]);
@@ -34,8 +37,8 @@ const SubjectPage = () => {
         resolver: zodResolver(FormSchema),
         defaultValues: {
             name: '',
-            institute_type: 'Select Institute',
-            category: 'Select Category',
+            institute_type: '',
+            category: '',
         },
     });
 
@@ -50,6 +53,9 @@ const SubjectPage = () => {
         institute_type: '',
         category: '',
     });
+
+    const { confirm } = Modal;
+
 
     const handleEditFormChange = (name: any, value: any) => {
         setUpdateFormData({ ...updateFormData, [name]: value });
@@ -135,12 +141,18 @@ const SubjectPage = () => {
                     <BsTrash fill="red" /> <span className="text-red-500">Delete</span>
                 </a>
             ),
-            onClick: (record: any) => handleDelete(record.subject_id),
+            onClick: (record: any) => showConfirm(record.subject_id),
         },
     ];
 
     // Create Subject
     const submitForm = async (data: z.infer<typeof FormSchema>) => {
+        setIsSubmitting(true);
+        if (data.institute_type === 'Select Institute' || data.category === 'Select Category' || data.name === '') {
+            toast.error('Please fill all fields');
+            setIsSubmitting(false);
+            return;
+        }
         try {
             const response = await axios.post('/api/unicus-admin/subject', data, {
                 headers: { 'Content-Type': 'application/json' },
@@ -155,6 +167,8 @@ const SubjectPage = () => {
             }
         } catch (error) {
             toast.error('Failed to create!');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -166,6 +180,23 @@ const SubjectPage = () => {
             category: record.category,
         });
         setViewSubjectModal(true);
+    };
+
+    const showConfirm = (record: any) => {
+        confirm({
+            title: 'Do you want to delete this subject?',
+            content: "This process can't be undone!",
+            centered: true,
+            icon: <ExclamationCircleFilled />,
+            okType: 'danger',
+            okText: 'Delete',
+            onOk() {
+                handleDelete(record);
+            },
+            onCancel() {
+                console.log('Cancel');
+            },
+        });
     };
 
     // Delete Subject
@@ -204,26 +235,26 @@ const SubjectPage = () => {
         <div className="mx-auto">
             <div className="h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
-                <Space wrap className="pl-3">
+                <Space wrap className="justify-between gap-12 pl-3">
                     <Select
-                        defaultValue="Select School"
+                        placeholder="Select Institute"
                         style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
-                            { value: 'preSchool', label: 'Pre-School' },
-                            { value: 'school', label: 'School' },
-                            { value: 'piriven', label: 'Piriven' },
+                            { value: 'Pre-School', label: 'Pre-School' },
+                            { value: 'School', label: 'School' },
+                            { value: 'Piriven', label: 'Piriven' },
                         ]}
                         onChange={(value) => setInstituteType(value)}
                     />
                     <Select
-                        defaultValue="Type"
+                        placeholder="Type"
                         style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
-                            { value: 'primary', label: 'Primary' },
-                            { value: 'secondary', label: 'Secondary' },
-                            { value: 'collegiate', label: 'Collegiate' },
+                            { value: 'Primary', label: 'Primary' },
+                            { value: 'Secondary', label: 'Secondary' },
+                            { value: 'Collegiate', label: 'Collegiate' },
                         ]}
                         onChange={(value) => setCategory(value)}
                     />
@@ -240,7 +271,7 @@ const SubjectPage = () => {
                     <Column title="SUBJECT" dataIndex="name" key="name" className="justify-start self-start font-semibold" />
                     <Column
                         className="flex justify-end self-end "
-                        title="ACTION"
+                        title="ACTIONS"
                         key="action"
                         render={(_, record: any) => (
                             <Dropdown
@@ -311,33 +342,39 @@ const SubjectPage = () => {
                                                     <label>Institute Type</label>
                                                     <Space wrap>
                                                         <Select
-                                                            defaultValue="Institute Type"
+                                                            placeholder="Institute Type"
                                                             style={{ width: 355 }}
-                                                            {...register('institute_type')}
+                                                            {...register('institute_type', { required: true })}
                                                             options={[
-                                                                { value: 'preSchool', label: 'Pre-School' },
-                                                                { value: 'school', label: 'School' },
-                                                                { value: 'piriven', label: 'Piriven' },
+                                                                { value: 'Pre-School', label: 'Pre-School' },
+                                                                { value: 'School', label: 'School' },
+                                                                { value: 'Piriven', label: 'Piriven' },
                                                             ]}
                                                             onChange={(value) => setValue('institute_type', value)}
                                                         />
+                                                        {errors.institute_type && <span className="error text-red-500">{errors.institute_type.message}</span>}
                                                     </Space>
                                                     <label>Category</label>
                                                     <Space wrap>
                                                         <Select
-                                                            defaultValue="Select Category"
+                                                            placeholder="Select Category"
                                                             style={{ width: 355 }}
-                                                            {...register('category')}
+                                                            {...register('category', { required: true })}
                                                             options={[
-                                                                { value: 'primary', label: 'Primary' },
-                                                                { value: 'secondary', label: 'Secondary' },
-                                                                { value: 'collegiate', label: 'Collegiate' },
+                                                                { value: 'Primary', label: 'Primary' },
+                                                                { value: 'Secondary', label: 'Secondary' },
+                                                                { value: 'Collegiate', label: 'Collegiate' },
                                                             ]}
                                                             onChange={(value) => setValue('category', value)}
                                                         />
+                                                        {errors.category && <span className="error text-red-500">{errors.category.message}</span>}
                                                     </Space>
                                                     <div className="flex w-full items-center justify-center pt-2">
-                                                        <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                        <button
+                                                            disabled={isSubmitting}
+                                                            type="submit"
+                                                            className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white"
+                                                        >
                                                             Save
                                                         </button>
                                                     </div>
@@ -448,7 +485,7 @@ const SubjectPage = () => {
                                                     <div className="relative text-white-dark">
                                                         <input
                                                             name="name"
-                                                            defaultValue={updateFormData.name}
+                                                            defaultValue={updateFormData.name.split('-')[0]}
                                                             onChange={handleInputChange}
                                                             placeholder="Enter Subject Name"
                                                             className="form-input placeholder:text-white-dark"
@@ -460,9 +497,9 @@ const SubjectPage = () => {
                                                             defaultValue={updateFormData.institute_type}
                                                             style={{ width: 355 }}
                                                             options={[
-                                                                { value: 'preSchool', label: 'pre-School' },
-                                                                { value: 'school', label: 'School' },
-                                                                { value: 'piriven', label: 'Piriven' },
+                                                                { value: 'Pre-School', label: 'Pre-School' },
+                                                                { value: 'School', label: 'School' },
+                                                                { value: 'Piriven', label: 'Piriven' },
                                                             ]}
                                                             onChange={(value) => handleSelectChange('institute_type', value)}
                                                         />
@@ -473,9 +510,9 @@ const SubjectPage = () => {
                                                             defaultValue={updateFormData.category}
                                                             style={{ width: 355 }}
                                                             options={[
-                                                                { value: 'primary', label: 'Primary' },
-                                                                { value: 'secondary', label: 'Secondary' },
-                                                                { value: 'collegiate', label: 'Collegiate' },
+                                                                { value: 'Primary', label: 'Primary' },
+                                                                { value: 'Secondary', label: 'Secondary' },
+                                                                { value: 'Collegiate', label: 'Collegiate' },
                                                             ]}
                                                             onChange={(value) => handleSelectChange('category', value)}
                                                         />

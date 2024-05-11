@@ -1,8 +1,8 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { BsXLg } from 'react-icons/bs';
-import { Button, Form, Input, Menu, Modal, Select, Space, Table, Tag } from 'antd';
-const { Column, ColumnGroup } = Table;
+import { Menu, Modal, Select, Space, Table } from 'antd';
+const { Column } = Table;
 import { Dropdown } from 'antd';
 import { BsThreeDotsVertical, BsEye, BsPencil, BsTrash } from 'react-icons/bs';
 import { useForm } from 'react-hook-form';
@@ -15,14 +15,16 @@ import toast, { Toaster } from 'react-hot-toast';
 
 import { fetchInstitutes, handleInstituteDelete } from '@/utils';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { ExclamationCircleFilled } from '@ant-design/icons';
+import { min } from 'lodash';
 
 const FormSchema = z.object({
-    institute_name: z.string().min(1, 'Name is required').optional(),
-    gender: z.string().optional(),
-    institute_type: z.string().optional(),
-    type: z.string().optional(),
-    from: z.number().optional(),
-    to: z.number().optional(),
+    institute_name: z.string().min(1, 'Name is required'),
+    gender: z.string().min(1, 'Gender is required'),
+    institute_type: z.string().min(1, 'Institute is required'),
+    type: z.string().min(1, 'Type is required'),
+    from: z.number().min(1, 'From is required'),
+    to: z.number().min(1, 'To is required'),
     contact_number: z
         .string()
         .min(1, 'Contact number is required')
@@ -33,9 +35,8 @@ const FormSchema = z.object({
                 throw new Error('Invalid contact number. Must be a valid integer.');
             }
             return parsedContactNumber;
-        })
-        .optional(),
-    password: z.string().min(1, 'Password is required').optional(),
+        }),
+    password: z.string().min(1, 'Password is required'),
 });
 
 const InstituteRegistration = () => {
@@ -51,6 +52,8 @@ const InstituteRegistration = () => {
     const [type, setType] = useState('');
     const [instituteType, setInstituteType] = useState('');
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const [showPassword, setShowPassword] = useState(false);
 
     const [updateModalView, setUpdateModalView] = useState(false);
@@ -64,6 +67,8 @@ const InstituteRegistration = () => {
         to: '',
     });
 
+    const { confirm } = Modal;
+
     const fetchData = async () => {
         const data = await fetchInstitutes();
         setInstitute(data);
@@ -71,7 +76,7 @@ const InstituteRegistration = () => {
 
     useEffect(() => {
         fetchData();
-    }, [institute]);
+    }, []);
 
     useEffect(() => {
         setRecordsData(institute);
@@ -108,8 +113,8 @@ const InstituteRegistration = () => {
         defaultValues: {
             institute_name: '',
             contact_number: undefined,
-            gender: 'Select Gender',
-            type: 'Select Type',
+            gender: '',
+            type: '',
             from: 0,
             to: 0,
             password: '',
@@ -173,11 +178,13 @@ const InstituteRegistration = () => {
 
     const submitUpdateForm = async (e: any) => {
         e.preventDefault();
+        setIsSubmitting(true);
         try {
             setLoading(true);
             const response = await axios.patch(`/api/unicus-admin/institute/${selectedItem?.institute_id}`, formData);
-            if (response.status === 201) {
-                toast.success('Item updated successfully');
+            if (response.status === 200) {
+                toast.success('Institute updated successfully');
+                fetchData(); // Refetch data after successful update
                 setUpdateModalView(false);
                 reset();
             } else {
@@ -187,7 +194,25 @@ const InstituteRegistration = () => {
             toast.error('Error updating institute details:');
         } finally {
             setLoading(false);
+            setIsSubmitting(false);
         }
+    };
+
+    const showConfirm = (recordId: any) => {
+        confirm({
+            title: 'Do you want to delete this institute?',
+            content: "This process can't be undone!",
+            centered: true,
+            icon: <ExclamationCircleFilled />,
+            okType: 'danger',
+            okText: 'Delete',
+            onOk() {
+                handleDelete(recordId);
+            },
+            onCancel() {
+                console.log('Cancel');
+            },
+        });
     };
 
     const items = [
@@ -212,12 +237,11 @@ const InstituteRegistration = () => {
         {
             key: '2', // Use a unique key here (avoid gaps)
             label: (
-
                 <a type="text" className="flex w-[100px] flex-row items-center gap-3">
-                    <BsTrash fill='red' /> <span className='text-red-500'>Delete</span>
+                    <BsTrash fill="red" /> <span className="text-red-500">Delete</span>
                 </a>
             ),
-            onClick: (recordId: { institute_id: any }) => handleDelete(recordId.institute_id), // Pass record.id directly
+            onClick: (recordId: any) => showConfirm(recordId.institute_id),
         },
     ];
 
@@ -227,6 +251,7 @@ const InstituteRegistration = () => {
             toast.error('Contact number must have exactly 10 digits!');
             return;
         }
+        setIsSubmitting(true);
         try {
             const response = await axios.post('/api/unicus-admin/institute', data, {
                 headers: { 'Content-Type': 'application/json' },
@@ -241,6 +266,8 @@ const InstituteRegistration = () => {
             }
         } catch (error) {
             toast.error('Failed to create!');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -256,26 +283,26 @@ const InstituteRegistration = () => {
         <div className="mx-auto">
             <div className="h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
-                <Space wrap className="gap-6 pl-3">
+                <Space wrap className="justify-between gap-12 pl-3">
                     <Select
-                        defaultValue="Select School"
+                        placeholder="Select Institute"
                         style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
-                            { value: 'preSchool', label: 'Pre-School' },
-                            { value: 'school', label: 'School' },
-                            { value: 'piriven', label: 'Piriven' },
+                            { value: 'Pre-School', label: 'Pre-School' },
+                            { value: 'School', label: 'School' },
+                            { value: 'Piriven', label: 'Piriven' },
                         ]}
                         onChange={(value) => setInstituteType(value)}
                     />
                     <Select
-                        defaultValue="Type"
+                        placeholder="Type"
                         style={{ width: 300 }}
                         options={[
                             { value: 'all', label: 'All' },
-                            { value: 'government', label: 'Government' },
-                            { value: 'semi government', label: 'Semi government' },
-                            { value: 'international', label: 'International' },
+                            { value: 'Government', label: 'Government' },
+                            { value: 'Semi Government', label: 'Semi Government' },
+                            { value: 'International', label: 'International' },
                             { value: 'Private', label: 'Private' },
                         ]}
                         onChange={(value) => setType(value)}
@@ -294,7 +321,7 @@ const InstituteRegistration = () => {
                     <Column title="US ID" dataIndex={['institute_admin', 'index']} key="institute_initial" className="font-semibold" />
                     <Column
                         className="flex justify-end self-end "
-                        title="ACTION"
+                        title="ACTIONS"
                         key="action"
                         render={(_: any, record: any) => (
                             <Dropdown
@@ -348,7 +375,7 @@ const InstituteRegistration = () => {
                                         <Dialog.Panel className="panel my-8 w-[400px] max-w-lg overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark">
                                             <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                                 <div className="text-lg font-bold">Institute</div>
-                                                <button type="button" onClick={() => setEditModalVisible(false)} className="text-white-dark hover:text-dark">
+                                                <button type="button" disabled={isSubmitting} onClick={() => setEditModalVisible(false)} className="text-white-dark hover:text-dark">
                                                     <BsXLg />
                                                 </button>
                                             </div>
@@ -366,52 +393,55 @@ const InstituteRegistration = () => {
                                                     <label>Gender</label>
                                                     <Space wrap>
                                                         <Select
-                                                            defaultValue="Select Gender"
+                                                            placeholder="Select Gender"
                                                             style={{ width: 355 }}
-                                                            {...register('gender')}
+                                                            {...register('gender', { required: true })}
                                                             options={[
-                                                                { value: 'boys', label: 'Boys' },
-                                                                { value: 'girls', label: 'Girls' },
-                                                                { value: 'boys/girls', label: 'Boys/Girls' },
-                                                                { value: 'monks', label: 'Monks' },
-                                                                { value: 'monks boys', label: 'Monks Boys' },
+                                                                { value: 'Boys', label: 'Boys' },
+                                                                { value: 'Girls', label: 'Girls' },
+                                                                { value: 'Boys/Girls', label: 'Boys/Girls' },
+                                                                { value: 'Monks', label: 'Monks' },
+                                                                { value: 'Monks/boys', label: 'Monks/Boys' },
                                                             ]}
                                                             onChange={(value) => setValue('gender', value)}
                                                         />
+                                                        {errors.gender && <span className="error text-red-500">{errors.gender.message}</span>}
                                                     </Space>
                                                     <label>Institute</label>
                                                     <Space wrap>
                                                         <Select
-                                                            defaultValue="Select School"
+                                                            placeholder="Select Institute"
                                                             style={{ width: 355 }}
-                                                            {...register('institute_type')}
+                                                            {...register('institute_type', { required: true })}
                                                             options={[
-                                                                { value: 'preSchool', label: 'Pre-School' },
-                                                                { value: 'school', label: 'School' },
-                                                                { value: 'piriven', label: 'Piriven' },
+                                                                { value: 'Pre-School', label: 'Pre-School' },
+                                                                { value: 'School', label: 'School' },
+                                                                { value: 'Piriven', label: 'Piriven' },
                                                             ]}
                                                             onChange={(value) => setValue('institute_type', value)}
                                                         />
+                                                        {errors.institute_type && <span className="error text-red-500">{errors.institute_type.message}</span>}
                                                     </Space>
-                                                    <label htmlFor="gender">Type</label>
+                                                    <label>Type</label>
                                                     <Space wrap>
                                                         <Select
-                                                            defaultValue="Select Type"
+                                                            placeholder="Select Type"
                                                             style={{ width: 355 }}
-                                                            {...register('type')}
+                                                            {...register('type', { required: 'type is required' })}
                                                             options={[
-                                                                { value: 'government', label: 'Government' },
-                                                                { value: 'semiGov', label: 'Semi Government' },
-                                                                { value: 'international', label: 'International' },
+                                                                { value: 'Government', label: 'Government' },
+                                                                { value: 'Semi Government', label: 'Semi Government' },
+                                                                { value: 'International', label: 'International' },
                                                                 { value: 'Private', label: 'Private' },
                                                             ]}
                                                             onChange={(value) => setValue('type', value)}
                                                         />
+                                                        {errors.type && <span className="error text-red-500">{errors.type.message}</span>}
                                                     </Space>
                                                     <label>From</label>
                                                     <Space wrap>
                                                         <Select
-                                                            defaultValue="From"
+                                                            placeholder="From"
                                                             style={{ width: 355 }}
                                                             {...register('from')}
                                                             options={[
@@ -431,11 +461,12 @@ const InstituteRegistration = () => {
                                                             ]}
                                                             onChange={(value) => setValue('from', Number(value))}
                                                         />
+                                                        {errors.from && <span className="error text-red-500">{errors.from.message}</span>}
                                                     </Space>
                                                     <label htmlFor="gender">To</label>
                                                     <Space wrap>
                                                         <Select
-                                                            defaultValue="To"
+                                                            placeholder="To"
                                                             style={{ width: 355 }}
                                                             {...register('to')}
                                                             options={[
@@ -455,6 +486,7 @@ const InstituteRegistration = () => {
                                                             ]}
                                                             onChange={(value) => setValue('to', Number(value))}
                                                         />
+                                                        {errors.to && <span className="error text-red-500">{errors.to.message}</span>}
                                                     </Space>
                                                     <label>Contact Number</label>
                                                     <div className="relative text-white-dark">
@@ -479,7 +511,11 @@ const InstituteRegistration = () => {
                                                         {errors.password && <span className="error text-red-500">{errors.password.message}</span>}
                                                     </div>
                                                     <div className="flex w-full items-center justify-center pt-2">
-                                                        <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                        <button
+                                                            disabled={isSubmitting}
+                                                            type="submit"
+                                                            className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white"
+                                                        >
                                                             Save
                                                         </button>
                                                     </div>
@@ -632,7 +668,7 @@ const InstituteRegistration = () => {
                                         <Dialog.Panel className="panel my-8 w-[400px] max-w-lg overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark">
                                             <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                                                 <div className="text-lg font-bold">Institute</div>
-                                                <button type="button" onClick={() => setUpdateModalView(false)} className="text-white-dark hover:text-dark">
+                                                <button disabled={isSubmitting} type="button" onClick={() => setUpdateModalView(false)} className="text-white-dark hover:text-dark">
                                                     <BsXLg />
                                                 </button>
                                             </div>
@@ -655,11 +691,11 @@ const InstituteRegistration = () => {
                                                             placeholder="Select Gender" // Provide a generic placeholder
                                                             style={{ width: 355 }}
                                                             options={[
-                                                                { value: 'boys', label: 'Boys' },
-                                                                { value: 'girls', label: 'Girls' },
-                                                                { value: 'boys/girls', label: 'Boys/Girls' },
-                                                                { value: 'monks', label: 'Monks' },
-                                                                { value: 'monks boys', label: 'Monks Boys' },
+                                                                { value: 'Boys', label: 'Boys' },
+                                                                { value: 'Girls', label: 'Girls' },
+                                                                { value: 'Boys/Girls', label: 'Boys/Girls' },
+                                                                { value: 'Monks', label: 'Monks' },
+                                                                { value: 'Monks/Boys', label: 'Monks/Boys' },
                                                             ]}
                                                             onChange={(value) => handleSelectChange('gender', value)} // Pass name and value
                                                             value={formData.gender} // Bind the value to formData.gender
@@ -671,9 +707,9 @@ const InstituteRegistration = () => {
                                                             value={formData.institute_type}
                                                             style={{ width: 355 }}
                                                             options={[
-                                                                { value: 'preSchool', label: 'pre-School' },
-                                                                { value: 'school', label: 'School' },
-                                                                { value: 'piriven', label: 'Piriven' },
+                                                                { value: 'Pre-School', label: 'Pre-School' },
+                                                                { value: 'School', label: 'School' },
+                                                                { value: 'Piriven', label: 'Piriven' },
                                                             ]}
                                                             onChange={(value) => handleSelectChange('institute_type', value)}
                                                         />
@@ -685,9 +721,9 @@ const InstituteRegistration = () => {
                                                             style={{ width: 355 }}
                                                             onChange={(value) => handleSelectChange('type', value)}
                                                             options={[
-                                                                { value: 'gov', label: 'Gov' },
-                                                                { value: 'semiGov', label: 'Semi gov' },
-                                                                { value: 'international', label: 'International' },
+                                                                { value: 'Government', label: 'Government' },
+                                                                { value: 'Semi Government', label: 'Semi Government' },
+                                                                { value: 'International', label: 'International' },
                                                                 { value: 'Private', label: 'Private' },
                                                             ]}
                                                         />
@@ -702,6 +738,16 @@ const InstituteRegistration = () => {
                                                                 { value: '1', label: '1' },
                                                                 { value: '2', label: '2' },
                                                                 { value: '3', label: '3' },
+                                                                { value: '4', label: '4' },
+                                                                { value: '5', label: '5' },
+                                                                { value: '6', label: '6' },
+                                                                { value: '7', label: '7' },
+                                                                { value: '8', label: '8' },
+                                                                { value: '9', label: '9' },
+                                                                { value: '10', label: '10' },
+                                                                { value: '11', label: '11' },
+                                                                { value: '12', label: '12' },
+                                                                { value: '13', label: '13' },
                                                             ]}
                                                         />
                                                     </Space>
@@ -715,6 +761,16 @@ const InstituteRegistration = () => {
                                                                 { value: '1', label: '1' },
                                                                 { value: '2', label: '2' },
                                                                 { value: '3', label: '3' },
+                                                                { value: '4', label: '4' },
+                                                                { value: '5', label: '5' },
+                                                                { value: '6', label: '6' },
+                                                                { value: '7', label: '7' },
+                                                                { value: '8', label: '8' },
+                                                                { value: '9', label: '9' },
+                                                                { value: '10', label: '10' },
+                                                                { value: '11', label: '11' },
+                                                                { value: '12', label: '12' },
+                                                                { value: '13', label: '13' },
                                                             ]}
                                                         />
                                                     </Space>
@@ -732,7 +788,11 @@ const InstituteRegistration = () => {
                                                         {errors.contact_number && <span className="error text-red-500">{errors.contact_number.message}</span>}
                                                     </div>
                                                     <div className="flex w-full items-center justify-center pt-2">
-                                                        <button type="submit" className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white">
+                                                        <button
+                                                            disabled={isSubmitting}
+                                                            type="submit"
+                                                            className="w-[130px] items-center justify-center rounded-md bg-green-600 p-1 font-semibold text-white"
+                                                        >
                                                             Save Change
                                                         </button>
                                                     </div>
