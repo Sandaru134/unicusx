@@ -67,7 +67,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             },
         });
 
-        let totalStudentMarks = 0;
+        let totalStudentMarks = 0.00;
 
         for (const mark of studentMarks) {
             if (mark.mark) {

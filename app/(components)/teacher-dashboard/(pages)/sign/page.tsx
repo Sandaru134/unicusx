@@ -148,13 +148,13 @@ const SignPage = () => {
         });
 
         return <h3 className="text-sm">{currentDate}</h3>;
-    };    
+    };
     return (
         <div className="mx-auto w-full">
             <div className="mb-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <form onSubmit={handleSubmit} className="flex flex-row justify-between">
-                    <Space wrap className="pl-3 justify-between gap-12">
+                    <Space wrap className="justify-between gap-12 pl-3">
                         <Select placeholder="Select Year" style={{ width: 300 }} onChange={(value) => handleSelectChange('year', value)}>
                             {year.map((year: any, index: any) => (
                                 <Option key={year} value={year}>
@@ -175,7 +175,7 @@ const SignPage = () => {
                         <Select style={{ width: 300 }} placeholder="Select Grade" onChange={(value) => handleSelectChange('grade_level', value)}>
                             {GradeData.map((data: any, index: any) => (
                                 <Option key={data} value={data.class?.grade_level}>
-                                    {data.class?.grade_level || ""}
+                                    {data.class?.grade_level || ''}
                                 </Option>
                             ))}
                         </Select>
@@ -183,7 +183,7 @@ const SignPage = () => {
                         <Select style={{ width: 300 }} placeholder="Select Class" onChange={(value) => handleSelectChange('class_name', value)}>
                             {ClassData.map((data: any, index: any) => (
                                 <Option key={data} value={data.class?.class_name}>
-                                    {data.class?.class_name || ""}
+                                    {data.class?.class_name || ''}
                                 </Option>
                             ))}
                         </Select>
@@ -294,20 +294,20 @@ const SignPage = () => {
                                         <div className="mt-2.5 h-1.5 bg-blue-400 shadow-xl"></div>
                                         <div className="mb-8">
                                             <h1 className="mb-2 mt-3 text-center text-[23px] font-bold">{marks[0]?.[0].institute.institute_name || ''}</h1>
-                                            <h2 className="font-bold text-center text-[20px]">Progress Report</h2>
+                                            <h2 className="text-center text-[20px] font-bold">Progress Report</h2>
                                         </div>
-                                        <div className="flex flex-row justify-between mb-5 font-semibold">
+                                        <div className="mb-5 flex flex-row justify-between font-semibold">
                                             <div className="flex flex-col">
                                                 <div className="flex flex-row gap-1">
                                                     <h1 className="items-start font-sans text-black">
-                                                        <span className="font-bold text-2em">Name : </span>
-                                                        <span className="font-normal text-2em">{marks[0]?.[0].student.full_name || ''}</span>
+                                                        <span className="text-2em font-bold">Name : </span>
+                                                        <span className="text-2em font-normal">{marks[0]?.[0].student.full_name || ''}</span>
                                                     </h1>
                                                 </div>
                                                 <div className="flex flex-row gap-1">
                                                     <h1 className="items-start font-sans text-black">
-                                                        <span className="font-bold text-2em">Grade : </span>
-                                                        <span className="font-normal text-2em">
+                                                        <span className="text-2em font-bold">Grade : </span>
+                                                        <span className="text-2em font-normal">
                                                             {marks[0]?.[0].student.classes.grade_level || ''} {marks[0]?.[0].student.classes.class_name || ''}
                                                         </span>
                                                     </h1>
@@ -315,16 +315,16 @@ const SignPage = () => {
                                             </div>
                                             <div className="flex flex-col">
                                                 <div className="flex flex-row gap-1">
-                                                    <h1 className="items-start font-sans font-bold text-black text-2em">
+                                                    <h1 className="text-2em items-start font-sans font-bold text-black">
                                                         {' '}
-                                                        US ID : <span className="font-normal text-2em">{marks[0]?.[0].student.index || ''}</span>
+                                                        US ID : <span className="text-2em font-normal">{marks[0]?.[0].student.index || ''}</span>
                                                     </h1>
                                                 </div>
                                                 <div className="flex flex-row gap-1">
-                                                    <h1 className="items-start font-sans font-bold text-black text-2em">
+                                                    <h1 className="text-2em items-start font-sans font-bold text-black">
                                                         {' '}
                                                         Term &nbsp;:{' '}
-                                                        <span className="font-normal text-2em">
+                                                        <span className="text-2em font-normal">
                                                             {new Date(marks[0]?.[0].terms.start).getFullYear()}, {marks[0]?.[0].terms.term_name || ''}
                                                         </span>
                                                     </h1>
@@ -342,8 +342,8 @@ const SignPage = () => {
                                                 <h1>PASS</h1>
                                             </div>
                                         </div>
-                                        <div className="flex flex-row justify-between w-full">
-                                            <div className="flex flex-col w-full mt-2">
+                                        <div className="flex w-full flex-row justify-between">
+                                            <div className="mt-2 flex w-full flex-col">
                                                 {marks[0]?.map((mark: any, index: any) => (
                                                     <h1 className="mt-2 font-bold" key={index}>
                                                         {mark.subject.name.split('-')[0] || ''}
@@ -352,15 +352,15 @@ const SignPage = () => {
                                             </div>
 
                                             <div className="flex flex-row justify-between gap-x-[70px]">
-                                                <div className="flex flex-col items-start justify-start mt-2">
+                                                <div className="mt-2 flex flex-col items-start justify-start">
                                                     {marks[0]?.map((mark: any, index: any) => (
                                                         <h1 className={`mt-2 ${mark.change !== 0 ? 'mr-3' : 'mr-5'}`} key={index}>
-                                                            {mark?.mark || '00'}
+                                                            {mark.mark % 1 === 0 ? `${mark.mark}.00` : mark.mark}
                                                         </h1>
                                                     ))}
                                                 </div>
 
-                                                <div className="flex flex-col mt-2 text-center">
+                                                <div className="mt-2 flex flex-col text-center">
                                                     {marks[0]?.map((mark: any, index: any) => (
                                                         <h1
                                                             className={`mr-[-28px] mt-2 pr-3.5 text-right`}
@@ -373,94 +373,94 @@ const SignPage = () => {
                                                         </h1>
                                                     ))}
                                                 </div>
-                                                <div className="flex flex-col items-center mt-2">
+                                                <div className="mt-2 flex flex-col items-center">
                                                     {marks[0]?.map((mark: any, index: any) => (
                                                         <h1 className={`mt-2 ${mark.pass === 'Ab' ? '' : 'ml-2'} `} key={index}>
-                                                            {mark.pass === 'Ab' ? 'AB' : mark.pass || ''}
+                                                            {mark.pass === 'Ab' ? 'ab' : mark.pass || ''}
                                                         </h1>
                                                     ))}
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="mt-4 h-[1px] bg-gray-400 shadow-lg"></div>
-                                        <div className="flex flex-row justify-between mt-1">
+                                        <div className="mt-1 flex flex-row justify-between">
                                             <h1 className="font-bold">Total </h1>
                                             <h1>{marks[0]?.[0].total_marks || ''}</h1>
                                         </div>
-                                        <div className="flex flex-row justify-between mt-2">
+                                        <div className="mt-2 flex flex-row justify-between">
                                             <h1 className="font-bold">Average</h1>
                                             <h1>{marks[0]?.[0].average || ''}</h1>
                                         </div>
-                                        <div className="flex flex-row justify-between mt-2">
+                                        <div className="mt-2 flex flex-row justify-between">
                                             <h1 className="font-bold">Highest total marks in the class</h1>
                                             <h1>{marks[0]?.[0].highest_total_mark || ''}</h1>
                                         </div>
-                                        <div className="flex flex-row justify-between mt-2">
+                                        <div className="mt-2 flex flex-row justify-between">
                                             <h1 className="font-bold">Total students in the class</h1>
                                             <h1>{marks[0]?.[0].total_students || ''}</h1>
                                         </div>
-                                        <div className="flex flex-row justify-between mt-2">
+                                        <div className="mt-2 flex flex-row justify-between">
                                             <h1 className="font-bold">Rank in the class</h1>
                                             <h1>{marks[0]?.[0].rank || ''}</h1>
                                         </div>
-                                        <div className="flex flex-row justify-between mt-2">
+                                        <div className="mt-2 flex flex-row justify-between">
                                             <h1 className="font-bold">Pass or Fail</h1>
                                             <h1></h1>
                                         </div>
-                                        <div className="flex flex-row justify-between mt-2">
+                                        <div className="mt-2 flex flex-row justify-between">
                                             <h1 className="font-bold">What to say</h1>
                                             <h1></h1>
                                         </div>
-                                        <div className="flex flex-row justify-between mt-2">
+                                        <div className="mt-2 flex flex-row justify-between">
                                             <h1 className="font-bold">Date of commencement of next term</h1>
                                             <h1>{marks[0]?.[0].next_term_start_date || 'N/A'}</h1>
                                         </div>
-                                        <div className="flex flex-wrap justify-between gap-8 mt-8 mb-2">
-                                            <div className="flex flex-col items-center justify-start flex-grow">
+                                        <div className="mb-2 mt-8 flex flex-wrap justify-between gap-8">
+                                            <div className="flex flex-grow flex-col items-center justify-start">
                                                 <h1>{marks[0]?.[0].teacher.full_name || 'N/A'}</h1>
                                                 <p>.....................................................</p>
-                                                <h2 className="font-bold text-2em">Class Teacher</h2>
-                                                <div className="flex flex-row items-center gap-2 ml-2">
+                                                <h2 className="text-2em font-bold">Class Teacher</h2>
+                                                <div className="ml-2 flex flex-row items-center gap-2">
                                                     <h3 className="ml-4 text-sm">
                                                         {marks[0]?.[0].teacher_signed_date
-                                                        ? new Date(marks[0][0].teacher_signed_date).toLocaleDateString('en-US', {
-                                                        year: 'numeric',
-                                                        month: 'numeric',
-                                                        day: 'numeric',
-                                                        })
-                                                        : 'N/A'}
+                                                            ? new Date(marks[0][0].teacher_signed_date).toLocaleDateString('en-US', {
+                                                                  year: 'numeric',
+                                                                  month: 'numeric',
+                                                                  day: 'numeric',
+                                                              })
+                                                            : 'N/A'}
                                                     </h3>
-                                                    <div className="inline-block mt-3 align-baseline">
+                                                    <div className="mt-3 inline-block align-baseline">
                                                         <img src="/assets/images/tick.svg" width={16} height={10} alt="tick" />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col items-center justify-center flex-grow">
+                                            <div className="flex flex-grow flex-col items-center justify-center">
                                                 <h1>{marks[0]?.[0].principal.full_name || 'N/A'}</h1>
                                                 <p>.....................................................</p>
-                                                <h2 className="font-bold text-2em">Principal</h2>
-                                                <div className="flex flex-row items-center gap-2 ml-2">
+                                                <h2 className="text-2em font-bold">Principal</h2>
+                                                <div className="ml-2 flex flex-row items-center gap-2">
                                                     <h3 className="ml-4 text-sm">
                                                         {marks[0]?.[0].principal_signed_date
-                                                        ? new Date(marks[0][0].teacher_signed_date).toLocaleDateString('en-US', {
-                                                        year: 'numeric',
-                                                        month: 'numeric',
-                                                        day: 'numeric',
-                                                        })
-                                                        : 'N/A'}
+                                                            ? new Date(marks[0][0].teacher_signed_date).toLocaleDateString('en-US', {
+                                                                  year: 'numeric',
+                                                                  month: 'numeric',
+                                                                  day: 'numeric',
+                                                              })
+                                                            : 'N/A'}
                                                     </h3>
-                                                    <div className="inline-block mt-3 align-baseline">
+                                                    <div className="mt-3 inline-block align-baseline">
                                                         <img src="/assets/images/tick.svg" width={16} height={10} alt="tick" />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col items-center justify-center flex-grow">
+                                            <div className="flex flex-grow flex-col items-center justify-center">
                                                 <h1>Unicus X</h1>
                                                 <p>.....................................................</p>
-                                                <h2 className="font-bold text-2em">Report Generator</h2>
-                                                <div className="flex flex-row items-center gap-2 ml-6 ">
+                                                <h2 className="text-2em font-bold">Report Generator</h2>
+                                                <div className="ml-6 flex flex-row items-center gap-2 ">
                                                     <CurrentDate />
-                                                    <div className="inline-block mt-3 align-baseline">
+                                                    <div className="mt-3 inline-block align-baseline">
                                                         <img src="/assets/images/tick.svg" width={16} height={10} alt="tick" />
                                                     </div>
                                                 </div>

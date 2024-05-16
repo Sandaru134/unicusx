@@ -135,7 +135,7 @@ const AccessPage = () => {
                             onChange={(value) => handleSelectChange('institute', value)}
                         />
                         <Select
-                            placeholder="Type"
+                            placeholder="Select Type"
                             style={{ width: 300 }}
                             options={[
                                 { value: 'Government', label: 'Government' },
@@ -146,7 +146,7 @@ const AccessPage = () => {
                             onChange={(value) => handleSelectChange('type', value)}
                         />
                         <Select
-                            placeholder="User"
+                            placeholder="Select User"
                             style={{ width: 300 }}
                             options={[
                                 { value: 'teacher', label: 'Teacher' },

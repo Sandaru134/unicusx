@@ -65,7 +65,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                         institute_id: status.institute_id,
                     },
                 });
-                console.log(mark)
+               
             }
         }
 

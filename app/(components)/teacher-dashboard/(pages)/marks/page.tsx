@@ -10,6 +10,7 @@ import React, { Fragment, useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { BsXLg } from 'react-icons/bs';
 import { Button, Modal } from 'antd';
+import { log } from 'console';
 
 const MarksPages = () => {
     const [addMarksModal, setAddMarksModal] = useState<boolean>(false);
@@ -111,6 +112,7 @@ const MarksPages = () => {
     };
 
     const handleSubmit = async (e: any) => {
+
         e.preventDefault();
         if (!payload.class_name || !payload.grade_level || !payload.subject_id || !payload.term_id) {
             toast.error('Please select all the fields');
@@ -129,20 +131,28 @@ const MarksPages = () => {
     };
 
     const handleMarksSubmit = async (e: any) => {
-        setIsSubmitting(true);
         e.preventDefault();
+        if (marksForm.mark) {
+            const isOnlyNumbers = /^\d*\.?\d*$/.test(marksForm.mark);
+            if (!isOnlyNumbers) {
+                toast.error('Input must be a number');
+                return;
+            }
+        }
         const payloadMarks = {
             ...marksForm,
-            mark: parseInt(marksForm.mark),
+            mark: parseFloat(marksForm.mark),
         };
+
         try {
+            setIsSubmitting(true);
             const response = await axios.patch(`/api/class-teacher/enter-marks/${id}`, payloadMarks);
             if (response.status === 200) {
                 axios
                     .post('/api/class-teacher/enter-marks/', payload)
                     .then((response) => {
                         setRecordsData(response.data);
-                        toast.success('status updated');
+                        toast.success('marks updated');
                     })
                     .catch((error) => {
                         console.error('Error:', error);
@@ -210,14 +220,16 @@ const MarksPages = () => {
             toast.error('Something went wrong');
         }
     };
-    
+
+    console.log('recordsData', recordsData);
+
     return (
         <div className="mx-auto w-full">
             <div className="mb-3 h-[150px] w-full rounded-md bg-white shadow-lg">
                 <h1 className="p-3 text-start text-2xl font-semibold text-gray-500">Search Filter</h1>
                 <form className="flex flex-row items-center justify-between" onSubmit={handleSubmit}>
                     <Space wrap className="flex flex-row items-center justify-between gap-12 pl-3 pr-5">
-                        <Select style={{ width: 300 }} placeholder="Select Term" onChange={(value) => handleSelectChange('term_id', value)}>
+                        <Select style={{ width: 280 }} placeholder="Select Term" onChange={(value) => handleSelectChange('term_id', value)}>
                             {term
                                 .sort((a: { term_name: string }, b: { term_name: any }) => a.term_name.localeCompare(b.term_name))
                                 .map((data: any, index: any) => (
@@ -227,31 +239,31 @@ const MarksPages = () => {
                                 ))}
                         </Select>
 
-                        <Select style={{ width: 300 }} placeholder="Select Grade" onChange={(value) => handleSelectChange('grade_level', value)}>
+                        <Select style={{ width: 280 }} placeholder="Select Grade" onChange={(value) => handleSelectChange('grade_level', value)}>
                             {GradeData.map((data: any, index: any) => (
                                 <Option key={data} value={data.class?.grade_level}>
                                     {data.class?.grade_level || ''}
                                 </Option>
                             ))}
                         </Select>
-                        <Select style={{ width: 300 }} placeholder="Select Class" onChange={(value) => handleSelectChange('class_name', value)}>
+                        <Select style={{ width: 280 }} placeholder="Select Class" onChange={(value) => handleSelectChange('class_name', value)}>
                             {ClassData.map((data: any, index: any) => (
                                 <Option key={data} value={data.class?.class_name}>
                                     {data.class?.class_name || ''}
                                 </Option>
                             ))}
                         </Select>
-                        <Select placeholder="Select Subject" style={{ width: 300 }} onChange={(value) => handleSelectChange('subject_id', value)}>
+                        <Select placeholder="Select Subject" style={{ width: 280 }} onChange={(value) => handleSelectChange('subject_id', value)}>
                             {subjectData.map((data: any, index: any) => (
                                 <Option key={data.id} value={data.subject?.subject_id}>
-                                    {data.subject?.name || ""}
+                                    {data.subject?.name || ''}
                                 </Option>
                             ))}
                         </Select>
                     </Space>
 
                     <div className="items-center">
-                        <button type="submit" className="mr-3 w-[130px] items-center rounded-md bg-blue-600 p-2 font-semibold text-white">
+                        <button type="submit" className="lg:1.5 mr-3 w-[130px] items-center rounded-md bg-blue-600 p-2 font-semibold text-white">
                             Filter
                         </button>
                     </div>
@@ -264,13 +276,7 @@ const MarksPages = () => {
                 <Table className="bg-white md:ml-5 md:mr-5" dataSource={recordsData}>
                     <Column title="STUDENT" dataIndex={['student', 'full_name']} key="full_name" className="justify-start self-start font-semibold" width={530} />
                     <Column title="US ID" dataIndex={['student', 'index']} key="index" className="justify-start self-start font-semibold" width={530} />
-                    <Column
-                        title="MARKS"
-                        key="mark"
-                        align='left'
-                        width={530}
-                        render={(_, record: any) => <span>{record.absent ? 'Absent' : record.mark}</span>}
-                    />
+                    <Column title="MARKS" key="mark" align="left" width={530} render={(_, record: any) => <span>{record.absent ? 'Absent' : record.mark}</span>} />
                     <Column
                         title="ACTIONS"
                         dataIndex="action"
@@ -280,7 +286,7 @@ const MarksPages = () => {
                         render={(_, record: any) => (
                             <Space size="middle">
                                 <button
-                                    disabled={isSubmitting === true && record.mark !== null}
+                                    disabled={isSubmitting === true || record.mark !== null || record.absent === true}
                                     className={`h-[30px] w-[80px] rounded-md p-1 text-xs text-white ${record.absent ? 'bg-gray-500' : 'bg-red-600 hover:bg-red-700'}`}
                                     // onClick={() => handleAbsent(record)}
                                     onClick={() => showConfirm(record)}
@@ -288,7 +294,7 @@ const MarksPages = () => {
                                     Absent
                                 </button>
                                 <button
-                                    disabled={isSubmitting === true}
+                                    disabled={isSubmitting === true || record.absent === true}
                                     className={`h-[30px] w-[80px] rounded-md p-1 text-xs text-white ${record.mark === null ? 'bg-[#3278FF] hover:bg-blue-600' : 'bg-[#979797]'}`}
                                     onClick={() => handleMarks(record)}
                                 >
@@ -329,7 +335,7 @@ const MarksPages = () => {
                                                 <input
                                                     name="mark"
                                                     required
-                                                    type="number"
+                                                    type="text"
                                                     defaultValue={marksForm.mark || ''}
                                                     onChange={handleInputChange}
                                                     placeholder="Enter Marks"

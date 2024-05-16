@@ -89,9 +89,12 @@ export async function PATCH(req: Request, { params }: { params: { subject_id: st
 
         let newName;
 
-        if (subjectById.name !== name || subjectById.category !== category) {
+        if (subjectById.category !== category) {
             const subjectName = subjectById.name.split('-')[0] || ''
             newName = `${subjectName}-${category}`;
+        }
+        if(subjectById.name !== name){
+            newName = `${name}-${category}`
         }
 
         await db.subjects.update({
