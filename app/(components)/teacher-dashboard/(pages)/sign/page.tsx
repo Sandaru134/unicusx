@@ -355,7 +355,7 @@ const SignPage = () => {
                                                 <div className="mt-2 flex flex-col items-start justify-start">
                                                     {marks[0]?.map((mark: any, index: any) => (
                                                         <h1 className={`mt-2 ${mark.change !== 0 ? 'mr-3' : 'mr-5'}`} key={index}>
-                                                            {mark.mark % 1 === 0 ? `${mark.mark}.00` : mark.mark}
+                                                            {mark.mark === null ? '00' : mark.mark % 1 === 0 ? `${mark.mark}.0` : mark.mark}
                                                         </h1>
                                                     ))}
                                                 </div>

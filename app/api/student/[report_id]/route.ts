@@ -85,7 +85,7 @@ export async function GET(req: Request, { params }: { params: { report_id: strin
 
             average = report.total_marks / report.total_subjects;
 
-            formattedAverage = average.toFixed(2);
+            formattedAverage = average.toFixed(1);
 
             let numericFormattedAverage: number = parseFloat(formattedAverage);
 
