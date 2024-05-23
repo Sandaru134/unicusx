@@ -19,13 +19,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         const { mark } = body;
         const newMark = mark.toFixed(1);
         let numericFormattedMark: number = parseFloat(newMark);
-        
+
         const updatedMarks = await db.marks.update({
             where: {
                 id: params.id,
             },
             data: {
                 mark: numericFormattedMark,
+            },
+            include: {
+                student: true,
             },
         });
 

@@ -1,15 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "cockroachdb"
   url      = env("DATABASE_URL")
 }
 
@@ -154,7 +148,7 @@ model Classes {
 model Teachers {
   teacher_id          String             @id @default(uuid())
   index               String             @unique
-  nic                 String             
+  nic                 String
   password            String
   full_name           String
   gender              String
@@ -168,7 +162,7 @@ model Teachers {
   institute           Institutes         @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
   institute_id        String
   class               Classes?           @relation(fields: [class_id], references: [class_id], onUpdate: Cascade)
-  class_id            String?            
+  class_id            String?
   teacher_subjects    teacher_subjects[]
   term_class          Term_class[]
   final_report        Final_Report[]
@@ -191,7 +185,7 @@ model teacher_subjects {
 model Principals {
   principal_id        String         @id @default(uuid())
   index               String         @unique
-  nic                 String         
+  nic                 String
   full_name           String
   gender              String
   type                String

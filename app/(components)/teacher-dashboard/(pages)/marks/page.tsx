@@ -88,7 +88,10 @@ const MarksPages = () => {
     const handleSearch = (value: string) => {
         setSearch(value);
         const filteredData = responseData.filter(
-            (item: any) => item.student_subject.student.full_name.toLowerCase().includes(value.toLowerCase()) || item.student_subject.student.index.toLowerCase().includes(value.toLowerCase())
+            (item: any) => 
+                item.student.full_name.toLowerCase().includes(value.toLowerCase()) || 
+                item.student.index.toLowerCase().includes(value.toLowerCase()) || 
+                item.student.date_of_birth.includes(value)
         );
         setRecordsData(filteredData);
     };
@@ -129,6 +132,9 @@ const MarksPages = () => {
             }
         }
     };
+
+    console.log(recordsData);
+    
 
     const handleMarksSubmit = async (e: any) => {
         e.preventDefault();
@@ -220,8 +226,6 @@ const MarksPages = () => {
             toast.error('Something went wrong');
         }
     };
-
-    console.log('recordsData', recordsData);
 
     return (
         <div className="mx-auto w-full">
