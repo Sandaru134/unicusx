@@ -3,10 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "cockroachdb"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
-
 model Unicus_User_sequence {
   number Int @id
 }
