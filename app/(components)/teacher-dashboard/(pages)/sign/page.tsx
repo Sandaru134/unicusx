@@ -363,7 +363,7 @@ const SignPage = () => {
                                                 <div className="mt-2 flex flex-col text-center">
                                                     {marks[0]?.map((mark: any, index: any) => (
                                                         <h1
-                                                            className={`mr-[-28px] mt-2 pr-3.5 text-right`}
+                                                            className={`mr-[-28px] mt-2 pr-4 text-right`}
                                                             key={index}
                                                             style={{
                                                                 color: mark.change === 0 || mark.pass === 'Ab' ? 'black' : mark.change < 0 ? 'red' : 'green',
