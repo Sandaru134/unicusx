@@ -16,7 +16,6 @@ import toast, { Toaster } from 'react-hot-toast';
 import { fetchInstitutes, handleInstituteDelete } from '@/utils';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import { ExclamationCircleFilled } from '@ant-design/icons';
-import { min } from 'lodash';
 
 const FormSchema = z.object({
     institute_name: z.string().min(1, 'Name is required'),

@@ -252,7 +252,7 @@ model Marks {
   terms              Terms      @relation(fields: [term_id], references: [term_id], onDelete: Cascade)
   class_id           String
   class              Classes    @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
-  mark               Float?
+  mark               Int?
   institute_id       String
   institute          Institutes @relation(fields: [institute_id], references: [institute_id], onDelete: Cascade)
   absent             Boolean    @default(false)
@@ -295,7 +295,7 @@ model Final_Report {
   terms                 Terms      @relation(fields: [term_id], references: [term_id], onDelete: Cascade)
   subject_id            String
   subject               Subjects   @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
-  mark                  Float?
+  mark                  Int?
   change                Int?
   pass                  String
   total_marks           Float?

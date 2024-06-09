@@ -1,17 +1,16 @@
 'use client';
-import { class_name, grade_level } from '@/utils';
 import { Dialog, Transition } from '@headlessui/react';
 import { Select, Space, Table, Tag } from 'antd';
 import { Option } from 'antd/es/mentions';
 import Column from 'antd/es/table/Column';
 import axios from 'axios';
-import Image from 'next/image';
+
 import React, { Fragment, useEffect, useRef, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { BsXLg } from 'react-icons/bs';
 import { FaDownload } from 'react-icons/fa';
 import { IoEyeOutline } from 'react-icons/io5';
-import ReactDOM from 'react-dom';
+
 import useGrade from '@/utils/useGrade';
 import useClass from '@/utils/useClass';
 
@@ -355,7 +354,7 @@ const SignPage = () => {
                                                 <div className="mt-2 flex flex-col items-start justify-start">
                                                     {marks[0]?.map((mark: any, index: any) => (
                                                         <h1 className={`mt-2 ${mark.change !== 0 ? 'mr-3' : 'mr-5'}`} key={index}>
-                                                            {mark.mark === null ? '00' : mark.mark % 1 === 0 ? `${mark.mark}.0` : mark.mark}
+                                                            {mark.mark === null ? '00' : mark.mark % 1 === 0 ? `${mark.mark}` : mark.mark}
                                                         </h1>
                                                     ))}
                                                 </div>
